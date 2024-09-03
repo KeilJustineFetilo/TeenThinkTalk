@@ -1,5 +1,3 @@
-//app/screens/loginscreen.jsx
-
 import React, { useState } from "react";
 import {
   View,
@@ -7,19 +5,16 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image, // Import Image from react-native
+  Image,
 } from "react-native";
+import logo from "../assets/images/logo.png"; // Make sure the path to the logo is correct
 
-// Import the image
-import logo from "../assets/images/logo.png";
-
-const LoginScreen = ({ navigation }) => {
+const ForgotPassword = ({ navigation }) => {
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    // Handle login logic here
-    console.log("Login pressed");
+  const handleRecovery = () => {
+    // Handle the recovery process here, then navigate to unlockAccount
+    navigation.navigate("UnlockAccount");
   };
 
   return (
@@ -27,8 +22,8 @@ const LoginScreen = ({ navigation }) => {
       {/* Display the logo */}
       <Image source={logo} style={styles.logo} />
 
-      <Text style={styles.welcomeText}>Welcome!</Text>
-      <Text style={styles.subText}>Enter your credentials to login</Text>
+      <Text style={styles.title}>Enter your username</Text>
+      <Text style={styles.subText}>A question will be asked later</Text>
 
       <TextInput
         style={styles.input}
@@ -38,25 +33,8 @@ const LoginScreen = ({ navigation }) => {
         onChangeText={setUsername}
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#C1B8E2"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginButtonText}>Login</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={() => {
-          navigation.navigate("ForgotPassword"); /* Handle forgot password */
-        }}
-      >
-        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+      <TouchableOpacity style={styles.recoverButton} onPress={handleRecovery}>
+        <Text style={styles.recoverButtonText}>Recover</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -69,7 +47,7 @@ const LoginScreen = ({ navigation }) => {
 
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate("SignUp"); // Ensure this matches the route name defined in your navigator
+          navigation.navigate("UnlockAccount");
         }}
       >
         <Text style={styles.signUpText}>
@@ -94,8 +72,8 @@ const styles = StyleSheet.create({
     resizeMode: "contain", // Ensure the image scales properly
     marginBottom: 20,
   },
-  welcomeText: {
-    fontSize: 24,
+  title: {
+    fontSize: 20,
     fontWeight: "bold",
     color: "#3C2257",
     marginBottom: 8,
@@ -114,7 +92,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 16,
   },
-  loginButton: {
+  recoverButton: {
     width: "100%",
     height: 50,
     borderRadius: 10,
@@ -123,15 +101,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  loginButtonText: {
+  recoverButtonText: {
     fontSize: 18,
     color: "#FFFFFF",
     fontWeight: "bold",
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: "#3C2257",
-    marginBottom: 8,
   },
   loginAsExpertText: {
     fontSize: 14,
@@ -148,4 +121,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+export default ForgotPassword;
