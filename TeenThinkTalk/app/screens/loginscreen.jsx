@@ -1,3 +1,5 @@
+//app/screens/loginscreen.jsx
+
 import React, { useState } from "react";
 import {
   View,
@@ -5,7 +7,11 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Image, // Import Image from react-native
 } from "react-native";
+
+// Import the image
+import logo from "../assets/images/logo.png";
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -18,6 +24,9 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* Display the logo */}
+      <Image source={logo} style={styles.logo} />
+
       <Text style={styles.welcomeText}>Welcome!</Text>
       <Text style={styles.subText}>Enter your credentials to login</Text>
 
@@ -60,7 +69,7 @@ const LoginScreen = ({ navigation }) => {
 
       <TouchableOpacity
         onPress={() => {
-          /* Navigate to Sign-Up screen */
+          navigation.navigate("SignUp"); // Ensure this matches the route name defined in your navigator
         }}
       >
         <Text style={styles.signUpText}>
@@ -76,8 +85,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F7F2FC",
+    backgroundColor: "#FFFFFF",
     padding: 16,
+  },
+  logo: {
+    width: 250, // Adjust width and height as necessary
+    height: 250,
+    resizeMode: "contain", // Ensure the image scales properly
+    marginBottom: 20,
   },
   welcomeText: {
     fontSize: 24,
