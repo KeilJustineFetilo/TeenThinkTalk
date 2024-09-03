@@ -1,14 +1,19 @@
-import { View, Button } from "react-native";
-const logoImg = require("./assets/adaptive-icon.png");
+import * as React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import LoginScreen from "./app/screens/loginscreen";
 
-export default function App() {
+const Stack = createStackNavigator();
+
+function App() {
   return (
-    <View style={{ flex: 1, backgroundColor: "plum", padding: 60 }}>
-      <Button
-        title="Press"
-        onPress={() => console.log("Button pressed")}
-        color="midnightblue"
-      />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        {/* Add other screens here */}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
+
+export default App;
