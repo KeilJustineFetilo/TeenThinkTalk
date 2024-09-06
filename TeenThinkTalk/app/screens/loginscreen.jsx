@@ -47,7 +47,12 @@ const LoginScreen = ({ navigation }) => {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+      <TouchableOpacity
+        style={styles.loginButton}
+        onPress={() => {
+          navigation.navigate("Home"); // Ensure this matches the route name defined in your navigator
+        }}
+      >
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
