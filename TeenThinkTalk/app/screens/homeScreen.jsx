@@ -171,18 +171,28 @@ const HomeScreen = ({ navigation }) => {
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navButton}>
-          <Icon name="person" size={30} color="#3C2257" />
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => {
+            navigation.navigate("Profile"); // Ensure this matches the route name defined in your navigator
+          }}
+        >
+          <Icon name="person" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Profile</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navButton}>
-          <Icon name="home" size={30} color="#3C2257" />
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => {
+            navigation.navigate("Home"); // Ensure this matches the route name defined in your navigator
+          }}
+        >
+          <Icon name="home" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navButton}>
-          <Icon name="chat" size={30} color="#3C2257" />
+          <Icon name="chat" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Chats</Text>
         </TouchableOpacity>
       </View>
@@ -315,7 +325,7 @@ const styles = StyleSheet.create({
   },
   navButtonText: {
     fontSize: 12,
-    color: "#3C2257",
+    color: "#673CC6",
   },
 });
 

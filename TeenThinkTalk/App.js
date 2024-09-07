@@ -6,6 +6,7 @@ import SignUpScreen from "./app/screens/signUpScreen";
 import ForgotPassword from "./app/screens/forgotPassword";
 import UnlockAccount from "./app/screens/unlockAccount";
 import HomeScreen from "./app/screens/homeScreen";
+import ProfileScreen from "./app/screens/profileScreen";
 
 const Stack = createStackNavigator();
 
@@ -18,6 +19,8 @@ function App() {
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         <Stack.Screen name="UnlockAccount" component={UnlockAccount} />
         <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        {/* Add ChatsScreen */}
       </Stack.Navigator>
     </NavigationContainer>
   );
