@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "122017150402",
+    "project_id": "teen-think-talk",
+    "storage_bucket": "teen-think-talk.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:122017150402:android:514ffa4ca3f81a2779d25b",
+        "android_client_info": {
+          "package_name": "com.dwcc.teenthinktalk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1fLYxUdeErio5RcRAgsq3PDL9Uq2mSfQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

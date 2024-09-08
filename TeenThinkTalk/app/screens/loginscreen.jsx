@@ -1,14 +1,17 @@
-//app/screens/loginscreen.jsx
-
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image, // Import Image from react-native
+  Image,
+  Alert,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect hook
+import { auth, db } from "../../config"; // Import Firebase Auth and Firestore instances
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth"; // Import necessary Firebase Auth methods
+import { collection, query, where, getDocs } from "firebase/firestore"; // Import Firestore functions
 
 // Import the image
 import logo from "../assets/images/logo.png";
@@ -17,9 +20,94 @@ const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    // Handle login logic here
-    console.log("Login pressed");
+  // Reset input fields whenever the screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      setUsername("");
+      setPassword("");
+    }, [])
+  );
+
+  const handleLogin = async () => {
+    if (!username || !password) {
+      Alert.alert("Error", "Please enter both username and password.");
+      return;
+    }
+
+    try {
+      // Step 1: Look up the user's email by their username in Firestore
+      const usersRef = collection(db, "user-teen2"); // Adjust collection name as needed
+      const q = query(usersRef, where("username", "==", username));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        Alert.alert("Invalid Credentials", "The username you entered does not exist.");
+        return;
+      }
+
+      // Assume the first document found is the user
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      const email = userData.email; // Get the email from the user document
+
+      // Step 2: Use Firebase's signInWithEmailAndPassword method to sign in the user
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      console.log("User logged in successfully!");
+
+      // Navigate to the Home screen upon successful login
+      navigation.navigate("Home");
+    } catch (error) {
+      console.error("Error logging in:", error);
+
+      // Generalize error handling for any invalid credential-related error
+      if (
+        error.code === "auth/wrong-password" ||
+        error.code === "auth/user-not-found" ||
+        error.code === "auth/invalid-email" ||
+        error.code === "auth/invalid-credential"
+      ) {
+        Alert.alert(
+          "Invalid Credentials",
+          "The username or password you entered is incorrect. Please try again."
+        );
+      } else {
+        Alert.alert("Login Error", error.message); // Display any other errors
+      }
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!username) {
+      Alert.alert("Error", "Please enter your username to reset your password.");
+      return;
+    }
+
+    try {
+      // Look up the user's email by their username in Firestore
+      const usersRef = collection(db, "user-teen2"); // Adjust collection name as needed
+      const q = query(usersRef, where("username", "==", username));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        Alert.alert("Error", "The username you entered does not exist.");
+        return;
+      }
+
+      // Assume the first document found is the user
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      const email = userData.email; // Get the email from the user document
+
+      // Send the password reset email using Firebase's sendPasswordResetEmail method
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert(
+        "Password Reset",
+        "A password reset email has been sent to your registered email address."
+      );
+    } catch (error) {
+      console.error("Error sending password reset email:", error);
+      Alert.alert("Error", error.message); // Display any errors
+    }
   };
 
   return (
@@ -36,6 +124,7 @@ const LoginScreen = ({ navigation }) => {
         placeholderTextColor="#C1B8E2"
         value={username}
         onChangeText={setUsername}
+        autoCapitalize="none"
       />
 
       <TextInput
@@ -47,20 +136,11 @@ const LoginScreen = ({ navigation }) => {
         secureTextEntry
       />
 
-      <TouchableOpacity
-        style={styles.loginButton}
-        onPress={() => {
-          navigation.navigate("Home"); // Ensure this matches the route name defined in your navigator
-        }}
-      >
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={() => {
-          navigation.navigate("ForgotPassword"); /* Handle forgot password */
-        }}
-      >
+      <TouchableOpacity onPress={handleForgotPassword}>
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
       </TouchableOpacity>
 
@@ -94,9 +174,9 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   logo: {
-    width: 250, // Adjust width and height as necessary
+    width: 250,
     height: 250,
-    resizeMode: "contain", // Ensure the image scales properly
+    resizeMode: "contain",
     marginBottom: 20,
   },
   welcomeText: {
