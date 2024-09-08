@@ -154,7 +154,9 @@ const HomeScreen = ({ navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.menuItem}
-          onPress={() => console.log("BMI Calculator pressed")}
+          onPress={() => {
+            navigation.navigate("BMI"); /* Handle forgot password */
+          }}
         >
           <Icon name="apps" size={25} color="#fff" />
           <Text style={styles.menuItemText}>BMI Calculator</Text>

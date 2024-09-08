@@ -8,6 +8,7 @@ import UnlockAccount from "./app/screens/unlockAccount";
 import HomeScreen from "./app/screens/homeScreen";
 import ProfileScreen from "./app/screens/profileScreen";
 import GalleryScreen from "./app/screens/galleryScreen";
+import BmiScreen from "./app/screens/bmiScreen";
 
 const Stack = createStackNavigator();
 
@@ -22,6 +23,7 @@ function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Gallery" component={GalleryScreen} />
+        <Stack.Screen name="BMI" component={BmiScreen} />
         {/* Add ChatsScreen */}
       </Stack.Navigator>
     </NavigationContainer>
