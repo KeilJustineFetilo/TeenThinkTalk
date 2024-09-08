@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Modal,
   Dimensions,
+  Animated,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons"; // For icons
 
@@ -50,14 +51,28 @@ const HomeScreen = ({ navigation }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
 
-  // Toggle menu modal
+  // Animated value for the side menu
+  const slideAnim = useRef(new Animated.Value(-width)).current; // Start off the screen
+  const slideNotifAnim = useRef(new Animated.Value(width)).current; // Notification off the screen (right)
+
+  // Toggle side menu
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
+    Animated.timing(slideAnim, {
+      toValue: menuVisible ? -width : 0, // Slide in or out
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
   };
 
-  // Toggle notification modal
+  // Toggle notification bar
   const toggleNotification = () => {
     setNotificationVisible(!notificationVisible);
+    Animated.timing(slideNotifAnim, {
+      toValue: notificationVisible ? width : 0, // Slide in or out
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
   };
 
   return (
@@ -110,64 +125,73 @@ const HomeScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       />
 
-      {/* Notification Modal */}
-      <Modal
-        visible={notificationVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={toggleNotification}
+      {/* Animated Side Menu */}
+      <Animated.View
+        style={[styles.sideMenu, { transform: [{ translateX: slideAnim }] }]}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Notifications</Text>
-            <FlatList
-              data={[
-                { id: "1", text: "New Announcement has been added" },
-                { id: "2", text: "Lorem Ipsum Dolor" },
-                { id: "3", text: "Lorem Ipsum Dolor" },
-              ]}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <Text style={styles.modalItem}>{item.text}</Text>
-              )}
-            />
-            <TouchableOpacity onPress={toggleNotification}>
-              <Icon
-                name="close"
-                size={30}
-                color="#fff"
-                style={styles.modalCloseIcon}
-              />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.menuHeader}>
+          <Text style={styles.menuTitle}>MENU</Text>
+          {/* Close button for menu */}
+          <TouchableOpacity onPress={toggleMenu}>
+            <Icon name="close" size={25} color="#fff" />
+          </TouchableOpacity>
         </View>
-      </Modal>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => console.log("Consultations pressed")}
+        >
+          <Icon name="local-hospital" size={25} color="#fff" />
+          <Text style={styles.menuItemText}>Consultations</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => console.log("Gallery pressed")}
+        >
+          <Icon name="photo" size={25} color="#fff" />
+          <Text style={styles.menuItemText}>Gallery</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => console.log("BMI Calculator pressed")}
+        >
+          <Icon name="apps" size={25} color="#fff" />
+          <Text style={styles.menuItemText}>BMI Calculator</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => console.log("Hotlines pressed")}
+        >
+          <Icon name="call" size={25} color="#fff" />
+          <Text style={styles.menuItemText}>Hotlines</Text>
+        </TouchableOpacity>
+      </Animated.View>
 
-      {/* Menu Modal */}
-      <Modal
-        visible={menuVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={toggleMenu}
+      {/* Animated Notification Bar */}
+      <Animated.View
+        style={[
+          styles.notificationBar,
+          { transform: [{ translateX: slideNotifAnim }] },
+        ]}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Menu</Text>
-            <Text style={styles.modalItem}>Consultations</Text>
-            <Text style={styles.modalItem}>Gallery</Text>
-            <Text style={styles.modalItem}>BMI Calculator</Text>
-            <Text style={styles.modalItem}>Hotlines</Text>
-            <TouchableOpacity onPress={toggleMenu}>
-              <Icon
-                name="close"
-                size={30}
-                color="#fff"
-                style={styles.modalCloseIcon}
-              />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.notificationHeader}>
+          <Text style={styles.menuTitle}>Notifications</Text>
+          {/* Close button for notification */}
+          <TouchableOpacity onPress={toggleNotification}>
+            <Icon name="close" size={25} color="#fff" />
+          </TouchableOpacity>
         </View>
-      </Modal>
+        <FlatList
+          data={[
+            { id: "1", text: "New Announcement has been added" },
+            { id: "2", text: "Lorem Ipsum Dolor" },
+            { id: "3", text: "Lorem Ipsum Dolor" },
+          ]}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <Text style={styles.notificationItem}>{item.text}</Text>
+          )}
+        />
+      </Animated.View>
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
@@ -205,18 +229,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F7F2FC",
-    paddingTop: 30,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 30,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
-    height: 60,
+    height: 90,
     paddingBottom: 5, // Added padding to the title bar
   },
   headerTitle: {
@@ -283,33 +306,61 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 10,
   },
-  // Modal styles
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    width: "80%",
-    height: height * 0.5,
+  // Side Menu styles
+  sideMenu: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: "70%",
     backgroundColor: "#3C2257",
-    borderRadius: 10,
-    padding: 20,
-    alignItems: "center",
+    zIndex: 10,
+    paddingVertical: 40,
   },
-  modalTitle: {
+  menuHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  menuTitle: {
     fontSize: 18,
     color: "#fff",
-    marginBottom: 10,
+    fontWeight: "bold",
   },
-  modalItem: {
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  menuItemText: {
     fontSize: 16,
     color: "#fff",
-    marginVertical: 5,
+    marginLeft: 10,
   },
-  modalCloseIcon: {
-    marginTop: 20,
+  // Notification Bar styles
+  notificationBar: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: "70%",
+    backgroundColor: "#3C2257",
+    zIndex: 10,
+    paddingVertical: 40,
+  },
+  notificationHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  notificationItem: {
+    fontSize: 16,
+    color: "#fff",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
   // Bottom Navigation styles
   bottomNav: {
