@@ -41,7 +41,7 @@ const posts = [
   },
   {
     id: "2",
-    user: "Jane Smith",
+    user: "Jane Smith BAGO",
     content: "Another interesting post",
     image: "https://via.placeholder.com/300",
   },
