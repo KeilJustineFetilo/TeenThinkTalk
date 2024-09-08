@@ -145,7 +145,9 @@ const HomeScreen = ({ navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.menuItem}
-          onPress={() => console.log("Gallery pressed")}
+          onPress={() => {
+            navigation.navigate("Gallery"); /* Handle forgot password */
+          }}
         >
           <Icon name="photo" size={25} color="#fff" />
           <Text style={styles.menuItemText}>Gallery</Text>
