@@ -45,12 +45,6 @@ const posts = [
     content: "Another interesting post",
     image: "https://via.placeholder.com/300",
   },
-  {
-    id: "3",
-    user: "Reenan Tubol",
-    content: "Another interesting post",
-    image: "https://via.placeholder.com/300",
-  },
 ];
 
 const HomeScreen = ({ navigation }) => {
