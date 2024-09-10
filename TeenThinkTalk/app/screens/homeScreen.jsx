@@ -146,7 +146,7 @@ const HomeScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => {
-            navigation.navigate("Gallery"); /* Handle forgot password */
+            navigation.navigate("Gallery");
           }}
         >
           <Icon name="photo" size={25} color="#fff" />
@@ -155,7 +155,7 @@ const HomeScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => {
-            navigation.navigate("BMI"); /* Handle forgot password */
+            navigation.navigate("BMI");
           }}
         >
           <Icon name="apps" size={25} color="#fff" />
@@ -163,7 +163,9 @@ const HomeScreen = ({ navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.menuItem}
-          onPress={() => console.log("Hotlines pressed")}
+          onPress={() => {
+            navigation.navigate("Hotline");
+          }}
         >
           <Icon name="call" size={25} color="#fff" />
           <Text style={styles.menuItemText}>Hotlines</Text>

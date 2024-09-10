@@ -11,6 +11,7 @@ import ProfileScreen from "./app/screens/profileScreen";
 import GalleryScreen from "./app/screens/galleryScreen";
 import BmiScreen from "./app/screens/bmiScreen";
 import EmailVerificationScreen from "./app/screens/emailverificationScreen";
+import HotlineScreen from "./app/screens/hotlineScreen";
 
 const Stack = createStackNavigator();
 
@@ -25,7 +26,11 @@ function App() {
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Gallery" component={GalleryScreen} />
         <Stack.Screen name="BMI" component={BmiScreen} />
-        <Stack.Screen name="EmailVerification" component={EmailVerificationScreen}/>
+        <Stack.Screen name="Hotline" component={HotlineScreen} />
+        <Stack.Screen
+          name="EmailVerification"
+          component={EmailVerificationScreen}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
