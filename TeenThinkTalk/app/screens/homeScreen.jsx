@@ -5,6 +5,7 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
+  TextInput,
   StyleSheet,
   Modal,
   Dimensions,
@@ -50,6 +51,8 @@ const posts = [
 const HomeScreen = ({ navigation }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
+  const [comments, setComments] = useState({});
+  const [commentText, setCommentText] = useState("");
 
   // Animated value for the side menu
   const slideAnim = useRef(new Animated.Value(-width)).current; // Start off the screen
@@ -75,16 +78,34 @@ const HomeScreen = ({ navigation }) => {
     }).start();
   };
 
+  // Handle adding comment
+  const handleAddComment = (postId) => {
+    if (!commentText) return;
+    setComments((prevComments) => ({
+      ...prevComments,
+      [postId]: [...(prevComments[postId] || []), commentText],
+    }));
+    setCommentText(""); // Clear input
+  };
+
+  // Handle deleting comment
+  const handleDeleteComment = (postId, index) => {
+    setComments((prevComments) => ({
+      ...prevComments,
+      [postId]: prevComments[postId].filter((_, i) => i !== index),
+    }));
+  };
+
   return (
     <View style={styles.container}>
       {/* Header with Menu and Notifications */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
-          <Icon name="menu" size={30} color="#3C2257" />
+          <Icon name="menu" size={30} color="#673CC6" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>TEEN Think Talk</Text>
         <TouchableOpacity onPress={toggleNotification}>
-          <Icon name="notifications" size={30} color="#3C2257" />
+          <Icon name="notifications" size={30} color="#673CC6" />
         </TouchableOpacity>
       </View>
 
@@ -113,13 +134,46 @@ const HomeScreen = ({ navigation }) => {
         renderItem={({ item }) => (
           <View style={styles.postContainer}>
             <View style={styles.postHeader}>
-              <Icon name="account-circle" size={40} color="#3C2257" />
+              <Icon name="account-circle" size={40} color="#673CC6" />
               <Text style={styles.postUser}>{item.user}</Text>
             </View>
             <Text style={styles.postContent}>{item.content}</Text>
             {item.image && (
               <Image source={{ uri: item.image }} style={styles.postImage} />
             )}
+            <View style={styles.actionsRow}>
+              {/* Like and Comment Buttons */}
+              <TouchableOpacity>
+                <Icon name="thumb-up" size={25} color="#673CC6" />
+              </TouchableOpacity>
+              <TouchableOpacity>
+                <Icon name="comment" size={25} color="#673CC6" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.commentSection}>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Add a comment..."
+                value={commentText}
+                onChangeText={setCommentText}
+              />
+              <TouchableOpacity onPress={() => handleAddComment(item.id)}>
+                <Icon name="send" size={25} color="#673CC6" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.commentList}>
+              {comments[item.id] &&
+                comments[item.id].map((comment, index) => (
+                  <View key={index} style={styles.comment}>
+                    <Text>{comment}</Text>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteComment(item.id, index)}
+                    >
+                      <Icon name="delete" size={20} color="#673CC6" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+            </View>
           </View>
         )}
         showsVerticalScrollIndicator={false}
@@ -131,14 +185,16 @@ const HomeScreen = ({ navigation }) => {
       >
         <View style={styles.menuHeader}>
           <Text style={styles.menuTitle}>MENU</Text>
-          {/* Close button for menu */}
           <TouchableOpacity onPress={toggleMenu}>
             <Icon name="close" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
+        <View style={styles.separator} />
         <TouchableOpacity
           style={styles.menuItem}
-          onPress={() => console.log("Consultations pressed")}
+          onPress={() => {
+            navigation.navigate("Consultations");
+          }}
         >
           <Icon name="local-hospital" size={25} color="#fff" />
           <Text style={styles.menuItemText}>Consultations</Text>
@@ -181,11 +237,11 @@ const HomeScreen = ({ navigation }) => {
       >
         <View style={styles.notificationHeader}>
           <Text style={styles.menuTitle}>Notifications</Text>
-          {/* Close button for notification */}
           <TouchableOpacity onPress={toggleNotification}>
             <Icon name="close" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
+        <View style={styles.separator} />
         <FlatList
           data={[
             { id: "1", text: "New Announcement has been added" },
@@ -208,9 +264,7 @@ const HomeScreen = ({ navigation }) => {
           }}
         >
           <Icon name="person" size={30} color="#673CC6" />
-          <Text style={styles.navButtonText}>Profile</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => {
@@ -218,12 +272,9 @@ const HomeScreen = ({ navigation }) => {
           }}
         >
           <Icon name="home" size={30} color="#673CC6" />
-          <Text style={styles.navButtonText}>Home</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.navButton}>
           <Icon name="chat" size={30} color="#673CC6" />
-          <Text style={styles.navButtonText}>Chats</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -253,7 +304,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#3C2257",
   },
-  // Announcement styles
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -268,16 +318,15 @@ const styles = StyleSheet.create({
   announcementContainer: {
     width: width * 0.7,
     marginRight: 16,
-    marginBottom: 50,
+    marginBottom: 20,
     alignItems: "center",
   },
   announcementImage: {
     width: "100%",
     height: 150,
     borderRadius: 10,
-    marginBottom: 8,
+    marginBottom: 100,
   },
-  // Post styles
   postContainer: {
     backgroundColor: "#fff",
     borderRadius: 10,
@@ -312,7 +361,36 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 10,
   },
-  // Side Menu styles
+  actionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 10,
+  },
+  commentSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+    paddingHorizontal: 16,
+  },
+  commentInput: {
+    flex: 1,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: "#E0D7F6",
+    paddingHorizontal: 10,
+  },
+  commentList: {
+    marginTop: 10,
+    paddingHorizontal: 16,
+  },
+  comment: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "#F7F2FC",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 5,
+  },
   sideMenu: {
     position: "absolute",
     top: 0,
@@ -327,7 +405,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   menuTitle: {
     fontSize: 18,
@@ -345,7 +423,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginLeft: 10,
   },
-  // Notification Bar styles
+  separator: {
+    borderBottomColor: "#ddd",
+    borderBottomWidth: 1,
+    marginVertical: 10,
+  },
   notificationBar: {
     position: "absolute",
     top: 0,
@@ -360,7 +442,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   notificationItem: {
     fontSize: 16,
@@ -368,7 +450,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  // Bottom Navigation styles
   bottomNav: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -379,10 +460,6 @@ const styles = StyleSheet.create({
   },
   navButton: {
     alignItems: "center",
-  },
-  navButtonText: {
-    fontSize: 12,
-    color: "#673CC6",
   },
 });
 

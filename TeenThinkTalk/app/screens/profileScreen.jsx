@@ -6,12 +6,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Modal,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons"; // For icons
 
 const ProfileScreen = ({ navigation }) => {
   // State to track if fields are editable
   const [isEditable, setIsEditable] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false); // State for logout modal
 
   // State to track form data
   const [formData, setFormData] = useState({
@@ -42,14 +44,43 @@ const ProfileScreen = ({ navigation }) => {
     setIsEditable(false);
   };
 
-  // Handle logout (this is just an example action)
+  // Handle logout
   const handleLogout = () => {
     console.log("Logging out...");
     navigation.navigate("Login");
+    setShowLogoutModal(false); // Hide modal after logout
   };
 
   return (
     <View style={styles.container}>
+      {/* Logout Confirmation Modal */}
+      <Modal
+        visible={showLogoutModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Confirm Log Out?</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleLogout}
+              >
+                <Text style={styles.confirmButtonText}>YES</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowLogoutModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>CANCEL</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Profile Header (Sticky) */}
       <View style={styles.profileHeader}>
         <View style={styles.profileInfo}>
@@ -60,7 +91,7 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
         {/* Logout Button */}
-        <TouchableOpacity onPress={handleLogout}>
+        <TouchableOpacity onPress={() => setShowLogoutModal(true)}>
           <Icon name="logout" size={30} color="#3C2257" />
         </TouchableOpacity>
       </View>
@@ -266,6 +297,52 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "#3C2257",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    color: "#fff",
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  confirmButton: {
+    backgroundColor: "#FF3B30",
+    padding: 10,
+    borderRadius: 5,
+    width: "45%",
+    alignItems: "center",
+  },
+  confirmButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  cancelButton: {
+    backgroundColor: "#7F3DFF",
+    padding: 10,
+    borderRadius: 5,
+    width: "45%",
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
   // Bottom Navigation styles (Persistent at bottom)
   bottomNav: {
