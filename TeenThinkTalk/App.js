@@ -12,6 +12,8 @@ import GalleryScreen from "./app/screens/galleryScreen";
 import BmiScreen from "./app/screens/bmiScreen";
 import EmailVerificationScreen from "./app/screens/emailverificationScreen";
 import HotlineScreen from "./app/screens/hotlineScreen";
+import ConsultationScreen from "./app/screens/consultationScreen";
+import CategoryScreen from "./app/screens/categoryScreen";
 
 const Stack = createStackNavigator();
 
@@ -27,6 +29,8 @@ function App() {
         <Stack.Screen name="Gallery" component={GalleryScreen} />
         <Stack.Screen name="BMI" component={BmiScreen} />
         <Stack.Screen name="Hotline" component={HotlineScreen} />
+        <Stack.Screen name="Consultations" component={ConsultationScreen} />
+        <Stack.Screen name="Category" component={CategoryScreen} />
         <Stack.Screen
           name="EmailVerification"
           component={EmailVerificationScreen}
