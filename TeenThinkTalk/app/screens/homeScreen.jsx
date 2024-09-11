@@ -50,7 +50,9 @@ const posts = [
   },
 ];
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({ navigation, route }) => {
+  const { profileData } = route.params || {}; // Get the passed profile data from the route
+
   const [menuVisible, setMenuVisible] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [comments, setComments] = useState({});
@@ -110,7 +112,7 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header with Menu and Notifications */}
+      {/* Header with Menu, Notifications, and User info */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
           <Icon name="menu" size={30} color="#673CC6" />
@@ -120,6 +122,15 @@ const HomeScreen = ({ navigation }) => {
           <Icon name="notifications" size={30} color="#673CC6" />
         </TouchableOpacity>
       </View>
+
+      {/* Display the user name if available */}
+      {profileData && (
+        <View style={styles.userInfo}>
+          <Text style={styles.welcomeText}>
+            Welcome, {profileData.username || "User"}!
+          </Text>
+        </View>
+      )}
 
       {/* Announcements Section */}
       <Text style={styles.sectionTitle}>Announcements</Text>
@@ -292,7 +303,7 @@ const HomeScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => {
-            navigation.navigate("Profile"); // Ensure this matches the route name defined in your navigator
+            navigation.navigate("Profile", { profileData }); // Pass profile data to ProfileScreen
           }}
         >
           <Icon name="person" size={30} color="#673CC6" />
@@ -300,7 +311,7 @@ const HomeScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => {
-            navigation.navigate("Home"); // Ensure this matches the route name defined in your navigator
+            navigation.navigate("Home");
           }}
         >
           <Icon name="home" size={30} color="#673CC6" />
@@ -335,6 +346,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#3C2257",
+  },
+  userInfo: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: "#fff",
+  },
+  welcomeText: {
+    fontSize: 18,
+    color: "#3C2257",
+    fontWeight: "bold",
   },
   sectionTitle: {
     fontSize: 18,

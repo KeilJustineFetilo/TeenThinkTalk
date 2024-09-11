@@ -10,7 +10,9 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect hook
 import { auth, db } from "../../config"; // Import Firebase Auth and Firestore instances
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth"; // Import necessary Firebase Auth methods
+import {
+  signInWithEmailAndPassword,
+} from "firebase/auth"; // Import necessary Firebase Auth methods
 import { collection, query, where, getDocs } from "firebase/firestore"; // Import Firestore functions
 
 // Import the image
@@ -54,8 +56,10 @@ const LoginScreen = ({ navigation }) => {
       await signInWithEmailAndPassword(auth, email.trim(), password);
       console.log("User logged in successfully!");
 
-      // Navigate to the Home screen upon successful login
-      navigation.navigate("Home");
+      // Since you already have the userData from the Firestore query, no need to fetch it by UID again
+      // Navigate to the Home screen and pass the profile data
+      navigation.navigate("Home", { profileData: userData });
+
     } catch (error) {
       console.error("Error logging in:", error);
 
@@ -83,7 +87,7 @@ const LoginScreen = ({ navigation }) => {
     }
 
     try {
-      // Look up the user's email by their username in Firestore
+      // Step 1: Look up the user's email by their username in Firestore
       const usersRef = collection(db, "user-teen2"); // Adjust collection name as needed
       const q = query(usersRef, where("username", "==", username));
       const querySnapshot = await getDocs(q);
@@ -98,11 +102,12 @@ const LoginScreen = ({ navigation }) => {
       const userData = userDoc.data();
       const email = userData.email; // Get the email from the user document
 
-      // Send the password reset email using Firebase's sendPasswordResetEmail method
+      // Step 2: Use Firebase Auth to send a password reset email
       await sendPasswordResetEmail(auth, email);
+
       Alert.alert(
-        "Password Reset",
-        "A password reset email has been sent to your registered email address."
+        "Password Reset Email Sent",
+        "A password reset email has been sent to your registered email address. Please check your email to reset your password."
       );
     } catch (error) {
       console.error("Error sending password reset email:", error);
