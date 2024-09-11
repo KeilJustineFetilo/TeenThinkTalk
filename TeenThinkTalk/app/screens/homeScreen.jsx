@@ -39,12 +39,14 @@ const posts = [
     user: "John Doe",
     content: "This is a sample post",
     image: "https://via.placeholder.com/300",
+    liked: false, // Track if the post is liked
   },
   {
     id: "2",
     user: "Jane Smith BAGO",
     content: "Another interesting post",
     image: "https://via.placeholder.com/300",
+    liked: false, // Track if the post is liked
   },
 ];
 
@@ -53,6 +55,7 @@ const HomeScreen = ({ navigation }) => {
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [comments, setComments] = useState({});
   const [commentText, setCommentText] = useState("");
+  const [activeComment, setActiveComment] = useState(""); // Track active comment input
 
   // Animated value for the side menu
   const slideAnim = useRef(new Animated.Value(-width)).current; // Start off the screen
@@ -86,6 +89,7 @@ const HomeScreen = ({ navigation }) => {
       [postId]: [...(prevComments[postId] || []), commentText],
     }));
     setCommentText(""); // Clear input
+    setActiveComment(""); // Hide comment input after posting
   };
 
   // Handle deleting comment
@@ -94,6 +98,14 @@ const HomeScreen = ({ navigation }) => {
       ...prevComments,
       [postId]: prevComments[postId].filter((_, i) => i !== index),
     }));
+  };
+
+  // Toggle like status
+  const toggleLike = (postId) => {
+    const updatedPosts = posts.map((post) =>
+      post.id === postId ? { ...post, liked: !post.liked } : post
+    );
+    setPosts(updatedPosts);
   };
 
   return (
@@ -142,25 +154,45 @@ const HomeScreen = ({ navigation }) => {
               <Image source={{ uri: item.image }} style={styles.postImage} />
             )}
             <View style={styles.actionsRow}>
-              {/* Like and Comment Buttons */}
-              <TouchableOpacity>
-                <Icon name="thumb-up" size={25} color="#673CC6" />
+              {/* Like Button */}
+              <TouchableOpacity onPress={() => toggleLike(item.id)}>
+                <Icon
+                  name={item.liked ? "thumb-up" : "thumb-up-off-alt"}
+                  size={25}
+                  color="#673CC6"
+                />
               </TouchableOpacity>
-              <TouchableOpacity>
+              {/* Separator Line */}
+              <View style={styles.separatorVertical} />
+              {/* Comment Button */}
+              <TouchableOpacity
+                onPress={() =>
+                  setActiveComment(activeComment === item.id ? "" : item.id)
+                }
+              >
                 <Icon name="comment" size={25} color="#673CC6" />
               </TouchableOpacity>
             </View>
-            <View style={styles.commentSection}>
-              <TextInput
-                style={styles.commentInput}
-                placeholder="Add a comment..."
-                value={commentText}
-                onChangeText={setCommentText}
-              />
-              <TouchableOpacity onPress={() => handleAddComment(item.id)}>
-                <Icon name="send" size={25} color="#673CC6" />
-              </TouchableOpacity>
-            </View>
+            {/* Comment Input and Send Button */}
+            {activeComment === item.id && (
+              <View style={styles.commentSection}>
+                <TextInput
+                  style={styles.commentInput}
+                  placeholder="Add a comment..."
+                  value={commentText}
+                  onChangeText={setCommentText}
+                />
+                <TouchableOpacity onPress={() => handleAddComment(item.id)}>
+                  <Icon
+                    name="send"
+                    size={25}
+                    color="#673CC6"
+                    style={styles.sendIcon}
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+            {/* Comment List */}
             <View style={styles.commentList}>
               {comments[item.id] &&
                 comments[item.id].map((comment, index) => (
@@ -363,8 +395,14 @@ const styles = StyleSheet.create({
   },
   actionsRow: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginTop: 10,
+  },
+  separatorVertical: {
+    height: 20,
+    width: 1,
+    backgroundColor: "#ddd",
   },
   commentSection: {
     flexDirection: "row",
@@ -378,6 +416,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: "#E0D7F6",
     paddingHorizontal: 10,
+  },
+  sendIcon: {
+    marginLeft: 10, // Add space between send icon and text box
   },
   commentList: {
     marginTop: 10,
