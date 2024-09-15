@@ -17,15 +17,30 @@ const CategoryScreen = ({ navigation }) => {
 
       {/* Category Options */}
       <View style={styles.categoryContainer}>
-        <TouchableOpacity style={styles.categoryBox}>
+        <TouchableOpacity
+          style={styles.categoryBox}
+          onPress={() => {
+            navigation.navigate("Lifestyle");
+          }}
+        >
           <Icon name="spa" size={50} color="#673CC6" />
           <Text style={styles.categoryText}>Lifestyle</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryBox}>
+        <TouchableOpacity
+          style={styles.categoryBox}
+          onPress={() => {
+            navigation.navigate("Nutrition");
+          }}
+        >
           <Icon name="restaurant" size={50} color="#673CC6" />
           <Text style={styles.categoryText}>Nutrition</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryBox}>
+        <TouchableOpacity
+          style={styles.categoryBox}
+          onPress={() => {
+            navigation.navigate("Reproductive");
+          }}
+        >
           <Icon name="favorite" size={50} color="#673CC6" />
           <Text style={styles.categoryText}>Reproductive Health</Text>
         </TouchableOpacity>
