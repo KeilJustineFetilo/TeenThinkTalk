@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useContext } from "react";
 import {
   View,
   Text,
@@ -12,15 +12,19 @@ import { useFocusEffect } from "@react-navigation/native"; // Import useFocusEff
 import { auth, db } from "../../config"; // Import Firebase Auth and Firestore instances
 import {
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "firebase/auth"; // Import necessary Firebase Auth methods
 import { collection, query, where, getDocs } from "firebase/firestore"; // Import Firestore functions
 
 // Import the image
 import logo from "../assets/images/logo.png";
+import { ProfileContext } from "../context/ProfileContext"; // Import ProfileContext
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  const { updateProfileData } = useContext(ProfileContext); // Access context function to update profile data
 
   // Reset input fields whenever the screen gains focus
   useFocusEffect(
@@ -56,14 +60,15 @@ const LoginScreen = ({ navigation }) => {
       await signInWithEmailAndPassword(auth, email.trim(), password);
       console.log("User logged in successfully!");
 
-      // Since you already have the userData from the Firestore query, no need to fetch it by UID again
+      // Update the profile context with the logged-in user's data
+      updateProfileData(userData);
+
       // Navigate to the Home screen and pass the profile data
-      navigation.navigate("Home", { profileData: userData });
+      navigation.navigate("Home");
 
     } catch (error) {
       console.error("Error logging in:", error);
 
-      // Generalize error handling for any invalid credential-related error
       if (
         error.code === "auth/wrong-password" ||
         error.code === "auth/user-not-found" ||
@@ -75,7 +80,7 @@ const LoginScreen = ({ navigation }) => {
           "The username or password you entered is incorrect. Please try again."
         );
       } else {
-        Alert.alert("Login Error", error.message); // Display any other errors
+        Alert.alert("Login Error", error.message);
       }
     }
   };
@@ -88,7 +93,7 @@ const LoginScreen = ({ navigation }) => {
 
     try {
       // Step 1: Look up the user's email by their username in Firestore
-      const usersRef = collection(db, "user-teen2"); // Adjust collection name as needed
+      const usersRef = collection(db, "user-teen2");
       const q = query(usersRef, where("username", "==", username));
       const querySnapshot = await getDocs(q);
 
@@ -97,10 +102,9 @@ const LoginScreen = ({ navigation }) => {
         return;
       }
 
-      // Assume the first document found is the user
       const userDoc = querySnapshot.docs[0];
       const userData = userDoc.data();
-      const email = userData.email; // Get the email from the user document
+      const email = userData.email;
 
       // Step 2: Use Firebase Auth to send a password reset email
       await sendPasswordResetEmail(auth, email);
@@ -111,7 +115,7 @@ const LoginScreen = ({ navigation }) => {
       );
     } catch (error) {
       console.error("Error sending password reset email:", error);
-      Alert.alert("Error", error.message); // Display any errors
+      Alert.alert("Error", error.message);
     }
   };
 
@@ -159,7 +163,7 @@ const LoginScreen = ({ navigation }) => {
 
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate("SignUp"); // Ensure this matches the route name defined in your navigator
+          navigation.navigate("SignUp");
         }}
       >
         <Text style={styles.signUpText}>

@@ -9,8 +9,9 @@ import {
   Alert,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker"; // Picker component for sex selection
 import { db, auth } from "../../config";
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, doc, setDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
 
 const SignUpScreen = ({ navigation }) => {
@@ -23,12 +24,13 @@ const SignUpScreen = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [birthday, setBirthday] = useState(new Date());
   const [address, setAddress] = useState("");
+  const [sex, setSex] = useState(null); // Initialize as null to show gray text initially
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isDateSelected, setIsDateSelected] = useState(false);
   const [errors, setErrors] = useState({});
   const [checkingUsername, setCheckingUsername] = useState(false);
+  const [showPicker, setShowPicker] = useState(false); // To control showing picker dropdown manually
 
-  // Function to handle sign-up
   const handleSignUp = async () => {
     if (!validateFields()) {
       Alert.alert("Please fix the errors before proceeding.");
@@ -36,15 +38,11 @@ const SignUpScreen = ({ navigation }) => {
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       await updateProfile(user, {
-        displayName: `${firstName} ${lastName}`
+        displayName: `${firstName} ${lastName}`,
       });
 
       await sendEmailVerification(auth.currentUser);
@@ -57,6 +55,7 @@ const SignUpScreen = ({ navigation }) => {
       const age = calculateAge(birthday);
 
       const userData = {
+        uid: user.uid,
         address,
         age,
         birthdate: birthday.toISOString(),
@@ -65,9 +64,10 @@ const SignUpScreen = ({ navigation }) => {
         lastName,
         middleName,
         username,
+        sex,
       };
 
-      await addDoc(collection(db, "user-teen2"), userData);
+      await setDoc(doc(db, "user-teen2", user.uid), userData);
 
       console.log("User registered and data saved to Firestore!");
 
@@ -139,6 +139,11 @@ const SignUpScreen = ({ navigation }) => {
 
     if (!isDateSelected) {
       newErrors.birthday = "Please select your birthday.";
+      isValid = false;
+    }
+
+    if (!sex) {
+      newErrors.sex = "Please select your sex."; // Error for unselected sex
       isValid = false;
     }
 
@@ -249,11 +254,8 @@ const SignUpScreen = ({ navigation }) => {
   };
 
   const validatePassword = (password) => {
-    if (password.length < 8 || password.length > 16) {
-      return "Password must be 8 to 16 characters long.";
-    }
-    if (!/^[a-zA-Z0-9]+$/.test(password)) {
-      return "Password must contain only letters and digits.";
+    if (password.length < 6) {
+      return "Password must be at least 6 characters long";
     }
     return "";
   };
@@ -304,19 +306,17 @@ const SignUpScreen = ({ navigation }) => {
       {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
       {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
 
-      <View style={styles.spacer} />
-
       <View style={styles.row}>
         <TextInput
-          style={[styles.input, styles.firstNameInput, errors.firstName ? styles.errorBorder : {}]}
+          style={[styles.input, styles.firstAndMiddleInput, errors.firstName ? styles.errorBorder : {}]}
           placeholder="First Name"
           placeholderTextColor="#C1B8E2"
           value={firstName}
           onChangeText={(value) => handleChange("firstName", value)}
         />
         <TextInput
-          style={[styles.input, styles.middleNameInput, errors.middleName ? styles.errorBorder : {}]}
-          placeholder="Middle Name (N/A if none)"
+          style={[styles.input, styles.firstAndMiddleInput, errors.middleName ? styles.errorBorder : {}]}
+          placeholder="Middle Name"
           placeholderTextColor="#C1B8E2"
           value={middleName}
           onChangeText={(value) => handleChange("middleName", value)}
@@ -334,15 +334,48 @@ const SignUpScreen = ({ navigation }) => {
       />
       {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
 
-      <TouchableOpacity
-        onPress={() => setShowDatePicker(true)}
-        style={[styles.input, styles.fullWidthInput, errors.birthday ? styles.errorBorder : {}]}
-      >
-        <Text style={[styles.inputText, { color: isDateSelected ? "#000000" : "#C1B8E2" }]}>
-          {isDateSelected ? birthday.toDateString() : "Select Your Birthday"}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.row}>
+        <TouchableOpacity
+          onPress={() => setShowDatePicker(true)}
+          style={[styles.input, styles.halfWidthInput, errors.birthday ? styles.errorBorder : {}]}
+        >
+          <Text style={[styles.inputText, { color: isDateSelected ? "#000000" : "#C1B8E2" }]}>
+            {isDateSelected ? birthday.toDateString() : "Select Your Birthday"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setShowPicker(!showPicker)}
+          style={[styles.input, styles.halfWidthInput]} // Trigger picker via touchable
+        >
+          <Text
+            style={[
+              styles.inputText,
+              { color: sex ? "#000000" : "#C1B8E2" }, // If a value is selected, make it black, otherwise gray
+            ]}
+          >
+            {sex ? sex : "Select Sex"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {showPicker && (
+        <Picker
+          selectedValue={sex}
+          onValueChange={(itemValue) => {
+            setSex(itemValue);
+            setShowPicker(false); // Hide picker after selection
+          }}
+          style={{ width: "100%", backgroundColor: "#E0D7F6", marginBottom: 10 }} // Full-width picker for clarity
+          mode="dropdown"
+        >
+          <Picker.Item label="Male" value="Male" />
+          <Picker.Item label="Female" value="Female" />
+        </Picker>
+      )}
+
       {errors.birthday && <Text style={styles.errorText}>{errors.birthday}</Text>}
+      {errors.sex && <Text style={styles.errorText}>{errors.sex}</Text>}
 
       {showDatePicker && (
         <DateTimePicker value={birthday} mode="date" display="default" onChange={onDateChange} />
@@ -402,14 +435,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     justifyContent: "center",
   },
-  firstNameInput: {
-    width: "60%",
-  },
-  middleNameInput: {
-    width: "38%",
+  firstAndMiddleInput: {
+    width: "48%",
   },
   halfWidthInput: {
-    width: "49%",
+    width: "48%",
   },
   fullWidthInput: {
     width: "100%",
@@ -426,9 +456,6 @@ const styles = StyleSheet.create({
     color: "red",
     fontSize: 12,
     marginBottom: 8,
-  },
-  spacer: {
-    height: 16,
   },
   signUpButton: {
     width: "100%",

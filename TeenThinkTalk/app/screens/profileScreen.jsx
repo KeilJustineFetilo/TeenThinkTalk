@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,253 +6,370 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Modal,
-  Platform,
+  Alert,
 } from "react-native";
-import Icon from "react-native-vector-icons/MaterialIcons"; // For icons
-import DateTimePicker from '@react-native-community/datetimepicker';
+import Icon from "react-native-vector-icons/MaterialIcons";
+import { ProfileContext } from "../context/ProfileContext";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker"; // Added Picker for sex selection
+import { auth, db } from "../../config"; // Firebase auth instance and Firestore
+import {
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  verifyBeforeUpdateEmail,
+  signOut,
+} from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore"; // Firestore update functions
 
 // Function to format the date to MM/DD/YYYY
-const formatDate = (dateString) => {
-  if (!dateString) return "N/A"; // Fallback for missing dates
-
-  const date = new Date(dateString);
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Get month and ensure two digits
-  const day = String(date.getDate()).padStart(2, '0'); // Get day and ensure two digits
-  const year = date.getFullYear(); // Get year
-
-  return `${month}/${day}/${year}`; // Return formatted date
+const formatDate = (date) => {
+  if (!date) return "N/A";
+  const formattedDate = new Date(date); 
+  const month = String(formattedDate.getMonth() + 1).padStart(2, "0");
+  const day = String(formattedDate.getDate()).padStart(2, "0");
+  const year = formattedDate.getFullYear();
+  return `${month}/${day}/${year}`;
 };
 
 // Function to calculate age based on birthdate
 const calculateAge = (birthdate) => {
-  const today = new Date();
   const birthDate = new Date(birthdate);
+  const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDifference = today.getMonth() - birthDate.getMonth();
-  
-  // If birthdate hasn't occurred yet this year, subtract one year from age
-  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 && today.getDate() < birthDate.getDate())
+  ) {
     age--;
   }
-
   return age;
 };
 
-// Validation function for email
-const validateEmail = (email) => {
-  const re = /^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$/;
-  return re.test(String(email).toLowerCase());
-};
+const ProfileScreen = ({ navigation }) => {
+  const { profileData, updateProfileData, clearProfileData } = useContext(ProfileContext);
 
-const ProfileScreen = ({ navigation, route }) => {
-  // Ensure profileData exists and use default values if not
-  const { profileData } = route.params || {};
-  const fallbackProfileData = {
-    firstName: 'N/A',
-    lastName: 'N/A',
-    middleName: '',
-    age: 'N/A', // We treat age as string here to safely handle it in TextInput
-    address: 'N/A',
-    username: 'N/A',
-    email: 'N/A',
-    birthdate: 'N/A',
-  };
-  const safeProfileData = { ...fallbackProfileData, ...profileData };
+  // Debugging: Log profile data after loading
+  useEffect(() => {
+    console.log("Profile Data in ProfileScreen:", profileData);
+  }, [profileData]);
 
-  // Combine the name fields into one full name
-  const fullName = `${safeProfileData.firstName} ${safeProfileData.middleName} ${safeProfileData.lastName}`.trim();
-
-  // State to track if fields are editable
-  const [isEditable, setIsEditable] = useState(false);
-  const [showLogoutModal, setShowLogoutModal] = useState(false); // State for logout modal
-  const [showDatePicker, setShowDatePicker] = useState(false); // State to show the DateTimePicker
-  const [emailError, setEmailError] = useState(''); // Email validation error
-  const [passwordError, setPasswordError] = useState(''); // Password mismatch error
-
-  // State to track form data (initialize with profileData or empty fields)
   const [formData, setFormData] = useState({
-    firstName: safeProfileData.firstName,
-    lastName: safeProfileData.lastName,
-    middleName: safeProfileData.middleName,
-    age: safeProfileData.age !== 'N/A' ? String(safeProfileData.age) : 'N/A', // Convert age to string for TextInput
-    address: safeProfileData.address,
-    username: safeProfileData.username,
-    email: safeProfileData.email,
-    birthdate: formatDate(safeProfileData.birthdate), // Format birthdate as MM/DD/YYYY
-    password: "********", // Placeholder for security
-    newPassword: "",
-    confirmPassword: "", // For password confirmation
+    firstName: profileData.firstName,
+    lastName: profileData.lastName,
+    middleName: profileData.middleName,
+    address: profileData.address,
+    email: profileData.email,
+    birthdate: profileData.birthdate,
+    sex: profileData.sex || "Male", // Default to Male if not set
   });
 
-  const [selectedDate, setSelectedDate] = useState(new Date(safeProfileData.birthdate || Date.now())); // Default to the current date or profile date
+  const [age, setAge] = useState(calculateAge(profileData.birthdate));
+  const [selectedDate, setSelectedDate] = useState(new Date(profileData.birthdate || Date.now()));
+  const [password, setPassword] = useState(""); // Store user password for re-authentication
+  const [showPicker, setShowPicker] = useState(false); 
+  // Separate editing states for each section
+  const [isPersonalInfoEditable, setIsPersonalInfoEditable] = useState(false);
+  const [isAccountDetailsEditable, setIsAccountDetailsEditable] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Toggle edit mode
-  const toggleEdit = () => {
-    setIsEditable(!isEditable);
-  };
+  useEffect(() => {
+    const updatedAge = calculateAge(formData.birthdate);
+    setFormData((prevData) => ({ ...prevData, age: updatedAge })); // Update the formData with recalculated age
+  }, [formData.birthdate]);
 
-  // Handle form input change
-  const handleChange = (field, value) => {
-    setFormData({ ...formData, [field]: value });
-  };
+  // Handle changes to form inputs
+  const handleChange = (field, value) => setFormData({ ...formData, [field]: value });
 
-  // Handle save
-  const handleSave = () => {
-    if (!validateEmail(formData.email)) {
-      setEmailError('Invalid email format');
-      return;
-    }
-
-    if (formData.newPassword !== formData.confirmPassword) {
-      setPasswordError('Passwords do not match');
-      return;
-    }
-
-    // Convert age back to number if it's a valid number
+  // Handle saving personal information
+  const handleSavePersonalInfo = () => {
     const updatedFormData = {
       ...formData,
-      age: isNaN(Number(formData.age)) ? formData.age : Number(formData.age),
+      birthdate: new Date(formData.birthdate).toISOString(),
+      age: calculateAge(formData.birthdate), // Ensure age is updated in Firestore
     };
-    
-    console.log("Saved data:", updatedFormData);
-    setIsEditable(false);
+
+    console.log("Saving personal info:", formData);
+    updateProfileData(formData);
+    setIsPersonalInfoEditable(false);
+  };
+  
+
+  // Update email in Firestore after email is verified
+  const updateFirestoreEmail = async (newEmail) => {
+    try {
+      if (!profileData.id) {
+        throw new Error("Missing profileData.id");
+      }
+      console.log("Updating email in Firestore for ID:", profileData.id); // Log the ID
+      const userDocRef = doc(db, "user-teen2", profileData.id); // Firestore document reference
+      await updateDoc(userDocRef, { email: newEmail });
+      console.log("Email updated in Firestore!");
+    } catch (error) {
+      console.error("Error updating Firestore email:", error);
+      Alert.alert("Error", `Failed to update email in Firestore: ${error.message}`);
+    }
   };
 
-  // Handle date change from the DateTimePicker and update both birthdate and age
+  // Handle email update with verifyBeforeUpdateEmail
+  const confirmEmailChange = async () => {
+    try {
+      if (!password) {
+        Alert.alert("Re-authentication Required", "Please enter your password to confirm the email change.");
+        return Promise.reject("Password required for email update");
+      }
+
+      const user = auth.currentUser;
+      const credential = EmailAuthProvider.credential(user.email, password);
+
+      console.log("Re-authenticating user with email:", user.email);
+
+      // Re-authenticate the user
+      await reauthenticateWithCredential(user, credential);
+      console.log("Re-authentication successful");
+
+      await verifyBeforeUpdateEmail(user, formData.email.trim());
+      console.log("Verification email sent to new address!");
+
+      Alert.alert(
+        "Verification Email Sent",
+        "A verification link has been sent to your email. Please check your inbox and click the link to verify your account."
+      );
+
+      // Log profileData.id before updating Firestore
+      console.log("Updating Firestore email with profileData.id:", profileData.id);
+
+      await updateFirestoreEmail(formData.email.trim());
+
+      await signOut(auth);
+      navigation.navigate("Login");
+    } catch (error) {
+      console.error("Error updating email:", error);
+      Alert.alert("Error", error.message || "Failed to update email.");
+      return Promise.reject(error);
+    }
+  };
+
+  // Handle saving account details, including email
+  const handleSaveAccountDetails = async () => {
+    console.log("Saving account details. Email change:", formData.email !== profileData.email);
+    if (formData.email !== profileData.email) {
+      try {
+        await confirmEmailChange();
+      } catch (error) {
+        return; // If email update fails, prevent saving
+      }
+    }
+    updateProfileData(formData);
+    setIsAccountDetailsEditable(false);
+  };
+
+  // Cancel personal information changes
+  const handleCancelPersonalInfo = () => {
+    console.log("Cancelling personal info changes.");
+    setFormData({
+      ...formData,
+      firstName: profileData.firstName,
+      middleName: profileData.middleName,
+      lastName: profileData.lastName,
+      address: profileData.address,
+      birthdate: profileData.birthdate,
+      sex: profileData.sex, // Reset the sex field as well
+    });
+    setIsPersonalInfoEditable(false);
+  };
+
+  // Cancel account details changes
+  const handleCancelAccountDetails = () => {
+    console.log("Cancelling account details changes.");
+    setFormData({
+      ...formData,
+      email: profileData.email,
+    });
+    setPassword(""); // Clear password input
+    setIsAccountDetailsEditable(false);
+  };
+
+  // Handle date changes
   const onChangeDate = (event, selectedDate) => {
     const currentDate = selectedDate || new Date(formData.birthdate);
-    setShowDatePicker(Platform.OS === 'ios'); // For iOS, we continue showing the picker until the user selects "done"
+    setShowDatePicker(false);
     setSelectedDate(currentDate);
 
-    const formattedDate = formatDate(currentDate);
-    const age = calculateAge(currentDate);
-
-    // Update birthdate and age in the form
-    setFormData({ ...formData, birthdate: formattedDate, age: String(age) });
+    // Store birthdate as a valid Date object and update the formData
+    setFormData((prevData) => ({
+      ...prevData,
+      birthdate: currentDate.toISOString(),
+      age: calculateAge(currentDate), // Recalculate and update age
+    }));
+    
+    // Update the age in the formData and state
+    const updatedAge = calculateAge(currentDate);
+    setAge(updatedAge); // Update the age state immediately
   };
 
   // Handle logout
   const handleLogout = () => {
-    console.log("Logging out...");
+    console.log("Logging out and clearing profile data.");
+    clearProfileData();
     navigation.navigate("Login");
-    setShowLogoutModal(false); // Hide modal after logout
   };
 
   return (
     <View style={styles.container}>
-      {/* Logout Confirmation Modal */}
-      <Modal
-        visible={showLogoutModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowLogoutModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirm Log Out?</Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={handleLogout}
-              >
-                <Text style={styles.confirmButtonText}>YES</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setShowLogoutModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>CANCEL</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Date Picker Modal */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          onChange={onChangeDate}
+          maximumDate={new Date()}
+        />
+      )}
 
-      {/* Profile Header (Sticky) */}
+      {/* Profile Header */}
       <View style={styles.profileHeader}>
         <View style={styles.profileInfo}>
-          <Icon name="account-circle" size={50} color="#fff" />
+          <Icon name="account-circle" size={70} color="#fff" />
           <View>
-            <Text style={styles.profileName}>{safeProfileData.username}</Text>
-            <Text style={styles.profileFullName}>{fullName}</Text>
+            <Text style={styles.profileName}>{formData.firstName} {formData.lastName}</Text>
+            <Text style={styles.profileSubtext}>{profileData.username || "Username"}</Text>
           </View>
         </View>
-        {/* Logout Button */}
-        <TouchableOpacity onPress={() => setShowLogoutModal(true)}>
-          <Icon name="logout" size={30} color="#3C2257" />
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <Icon name="logout" size={30} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      {/* Scrollable content */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Personal Information Section */}
         <View style={styles.card}>
           <View style={styles.sectionHeader}>
             <Text style={styles.cardTitle}>Personal Information</Text>
-            <TouchableOpacity onPress={toggleEdit}>
-              <Icon name="edit" size={25} color="#3C2257" />
+            <TouchableOpacity
+              onPress={() => setIsPersonalInfoEditable(!isPersonalInfoEditable)}
+            >
+              <Icon name="edit" size={25} color="#673CC6" />
             </TouchableOpacity>
           </View>
 
           <Text style={styles.label}>First Name</Text>
           <TextInput
-            style={[styles.input, isEditable ? styles.inputEditable : null]}
-            editable={isEditable}
+            style={[styles.input, isPersonalInfoEditable ? styles.inputEditable : null]}
+            editable={isPersonalInfoEditable}
             value={formData.firstName}
             onChangeText={(value) => handleChange("firstName", value)}
           />
 
           <Text style={styles.label}>Middle Name</Text>
           <TextInput
-            style={[styles.input, isEditable ? styles.inputEditable : null]}
-            editable={isEditable}
+            style={[styles.input, isPersonalInfoEditable ? styles.inputEditable : null]}
+            editable={isPersonalInfoEditable}
             value={formData.middleName}
             onChangeText={(value) => handleChange("middleName", value)}
           />
 
           <Text style={styles.label}>Last Name</Text>
           <TextInput
-            style={[styles.input, isEditable ? styles.inputEditable : null]}
-            editable={isEditable}
+            style={[styles.input, isPersonalInfoEditable ? styles.inputEditable : null]}
+            editable={isPersonalInfoEditable}
             value={formData.lastName}
             onChangeText={(value) => handleChange("lastName", value)}
           />
 
-          <Text style={styles.label}>Age</Text>
-          <TextInput
-            style={[styles.input, isEditable ? styles.inputEditable : null]}
-            editable={false} // Age is auto-calculated
-            value={formData.age}
-            keyboardType="numeric"
-          />
+          {/* Sex Picker */}
+          <Text style={styles.label}>Sex</Text>
+          <TouchableOpacity
+            onPress={() => {
+              if (isPersonalInfoEditable) setShowPicker(!showPicker);
+            }}
+            style={[
+              styles.input, 
+              isPersonalInfoEditable && { borderColor: "#673CC6", borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 10}
+            ]}
+            disabled={!isPersonalInfoEditable}
+          >
+            <Text
+              style={[
+                styles.textInputText,
+                { color: formData.sex ? "#000000" : "#C1B8E2" },
+              ]}
+            >
+              {formData.sex ? formData.sex : "Select Sex"}
+            </Text>
+          </TouchableOpacity>
+
+          {showPicker && isPersonalInfoEditable && (
+            <Picker
+              selectedValue={formData.sex}
+              onValueChange={(itemValue) => {
+                setFormData({ ...formData, sex: itemValue });
+                setShowPicker(false);
+              }}
+              style={{
+                width: "100%",
+                backgroundColor: "#E0D7F6",
+                marginBottom: 10,
+                borderColor: "#673CC6",
+                borderWidth: 1,
+                borderRadius: 10,
+              }}
+              mode="dropdown"
+            >
+              <Picker.Item label="Male" value="Male" />
+              <Picker.Item label="Female" value="Female" />
+            </Picker>
+          )}
+
+          <View style={styles.birthdateContainer}>
+            <View style={styles.birthdateInput}>
+              <Text style={styles.label}>Birthdate</Text>
+              <TouchableOpacity
+                style={[
+                  styles.input, 
+                  isPersonalInfoEditable ? styles.inputEditable : null, 
+                  { justifyContent: "center" }
+                ]}
+                disabled={!isPersonalInfoEditable}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={styles.textInputText}>{formatDate(formData.birthdate)}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.ageContainer}>
+              <Text style={styles.label}>Age</Text>
+              <TextInput
+                style={[
+                  styles.input, 
+                  isPersonalInfoEditable ? styles.inputEditable : null,
+                  { height: 48 } // Adjust height to match Birthdate field
+                ]}
+                editable={false}
+                value={String(age)}
+              />
+            </View>
+          </View>
+
 
           <Text style={styles.label}>Address</Text>
           <TextInput
-            style={[styles.input, isEditable ? styles.inputEditable : null]}
-            editable={isEditable}
+            style={[styles.input, isPersonalInfoEditable ? styles.inputEditable : null]}
+            editable={isPersonalInfoEditable}
             value={formData.address}
             onChangeText={(value) => handleChange("address", value)}
           />
 
-          <Text style={styles.label}>Birthdate</Text>
-          <TouchableOpacity
-            onPress={() => setShowDatePicker(true)}
-            style={[styles.input, { justifyContent: 'center' }]}
-            disabled={!isEditable}
-          >
-            <Text style={styles.textInputText}>{formData.birthdate}</Text>
-          </TouchableOpacity>
-
-          {/* Show DateTimePicker if enabled */}
-          {showDatePicker && (
-            <DateTimePicker
-              value={selectedDate}
-              mode="date"
-              display="default"
-              onChange={onChangeDate}
-              maximumDate={new Date()} // Optional: Prevent future dates
-            />
+          {isPersonalInfoEditable && (
+            <View style={styles.editButtons}>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSavePersonalInfo}>
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelButton} onPress={handleCancelPersonalInfo}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -260,96 +377,59 @@ const ProfileScreen = ({ navigation, route }) => {
         <View style={styles.card}>
           <View style={styles.sectionHeader}>
             <Text style={styles.cardTitle}>Account Details</Text>
-            <TouchableOpacity onPress={toggleEdit}>
-              <Icon name="edit" size={25} color="#3C2257" />
+            <TouchableOpacity
+              onPress={() => setIsAccountDetailsEditable(!isAccountDetailsEditable)}
+            >
+              <Icon name="edit" size={25} color="#673CC6" />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.label}>Username</Text>
-          <TextInput
-            style={[styles.input, isEditable ? styles.inputEditable : null]}
-            editable={false} // Username should not be editable
-            value={formData.username}
-          />
-
           <Text style={styles.label}>Email</Text>
           <TextInput
-            style={[styles.input, isEditable ? styles.inputEditable : null]}
-            editable={isEditable}
+            style={[styles.input, isAccountDetailsEditable ? styles.inputEditable : null]}
+            editable={isAccountDetailsEditable}
             value={formData.email}
-            onChangeText={(value) => {
-              setEmailError('');
-              handleChange("email", value);
-            }}
-          />
-          {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
-
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={[styles.input, isEditable ? styles.inputEditable : null]}
-            editable={false}
-            value={formData.password}
-            secureTextEntry
+            onChangeText={(value) => handleChange("email", value)}
           />
 
-          {isEditable && (
+          {isAccountDetailsEditable && (
             <>
-              <Text style={styles.label}>New Password</Text>
+              <Text style={styles.label}>Password</Text>
               <TextInput
-                style={[styles.input, isEditable ? styles.inputEditable : null]}
-                editable={isEditable}
-                placeholder="New Password"
+                style={styles.input}
+                placeholder="Enter your password to confirm changes"
+                placeholderTextColor="#C1B8E2"
                 secureTextEntry
-                value={formData.newPassword}
-                onChangeText={(value) => {
-                  setPasswordError('');
-                  handleChange("newPassword", value);
-                }}
+                value={password}
+                onChangeText={(value) => setPassword(value)}
               />
 
-              <Text style={styles.label}>Confirm New Password</Text>
-              <TextInput
-                style={[styles.input, isEditable ? styles.inputEditable : null]}
-                editable={isEditable}
-                placeholder="Confirm New Password"
-                secureTextEntry
-                value={formData.confirmPassword}
-                onChangeText={(value) => {
-                  setPasswordError('');
-                  handleChange("confirmPassword", value);
-                }}
-              />
-              {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+              <View style={styles.editButtons}>
+                <TouchableOpacity style={styles.saveButton} onPress={handleSaveAccountDetails}>
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.cancelButton} onPress={handleCancelAccountDetails}>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
             </>
           )}
         </View>
-
-        {/* Save Button */}
-        {isEditable && (
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Text style={styles.saveButtonText}>SAVE</Text>
-          </TouchableOpacity>
-        )}
       </ScrollView>
 
-      {/* Bottom Navigation (Persistent) */}
+      {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navButton}>
+        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("Profile")}>
           <Icon name="person" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Profile</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.navButton}
-          onPress={() => {
-            navigation.navigate("Home");
-          }}
-        >
+        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("Home")}>
           <Icon name="home" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navButton}>
+        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("Chats")}>
           <Icon name="chat" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Chats</Text>
         </TouchableOpacity>
@@ -365,142 +445,133 @@ const styles = StyleSheet.create({
     backgroundColor: "#F7F2FC",
   },
   profileHeader: {
-    paddingTop: 40,
-    backgroundColor: "#E0D7F6",
-    padding: 16,
+    paddingTop: 60,
+    backgroundColor: "#673CC6",
+    paddingHorizontal: 20,
+    paddingBottom: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    zIndex: 1,
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
   },
   profileInfo: {
     flexDirection: "row",
     alignItems: "center",
   },
   profileName: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: "bold",
-    color: "#3C2257",
-    marginLeft: 10,
+    color: "#fff",
+    marginLeft: 15,
   },
-  profileFullName: {
-    fontSize: 14,
-    color: "#3C2257",
-    marginLeft: 10,
+  profileSubtext: {
+    fontSize: 16,
+    color: "#ddd",
+    marginLeft: 15,
+  },
+  logoutButton: {
+    padding: 10,
+    backgroundColor: "#FF3B30",
+    borderRadius: 50,
   },
   scrollContent: {
-    paddingTop: 140, // To leave space for the fixed header
-    paddingBottom: 100, // To leave space for the bottom navigation
+    paddingTop: 20,
+    paddingBottom: 100, // Leave space for the bottom navigation bar
+    paddingHorizontal: 16,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 16,
-    marginVertical: 10,
-    shadowColor: '#000',
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#3C2257',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    fontWeight: "bold",
+    color: "#3C2257",
   },
   label: {
-    fontSize: 14,
-    color: '#3C2257',
+    fontSize: 16,
+    color: "#3C2257",
     marginBottom: 5,
   },
   input: {
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
     paddingVertical: 10,
-    marginBottom: 16,
+    paddingHorizontal: 16, // Add consistent padding for better alignment
+    marginBottom: 10, // Reduce margin to reduce space before Address
     color: "#3C2257",
+    height: 48, // Ensure height is the same for all input fields
   },
   inputEditable: {
-    borderColor: '#673CC6',
-    borderWidth: 2,
+    borderColor: "#673CC6", // Purple border
+    borderWidth: 1.5,
     paddingHorizontal: 8,
+    borderRadius: 10,
   },
-  textInputText: {
-    color: "#3C2257",
-    fontSize: 16,
+  inputReadOnly: {
+    backgroundColor: "#f5f5f5", // Background for non-editable fields
+  },
+  birthdateContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 40, // Reduced to lessen the gap before Address
+  },
+  birthdateInput: {
+    flex: 0.7,
+    height: 48, // Ensure height is consistent
+  },
+  ageContainer: {
+    flex: 0.3,
+    marginLeft: 10,
+    height: 48, // Ensure height is consistent
+  },
+  picker: {
+    height: 50,
+    width: "100%",
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  editButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
   },
   saveButton: {
     backgroundColor: "#28A745",
     paddingVertical: 15,
     borderRadius: 10,
-    marginHorizontal: 16,
-    marginBottom: 30,
     alignItems: "center",
+    width: "45%",
   },
   saveButtonText: {
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
   },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginBottom: 5,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    width: "80%",
-    backgroundColor: "#3C2257",
-    borderRadius: 10,
-    padding: 20,
-    alignItems: "center",
-  },
-  modalTitle: {
-    fontSize: 18,
-    color: "#fff",
-    marginBottom: 20,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  confirmButton: {
-    backgroundColor: "#FF3B30",
-    padding: 10,
-    borderRadius: 5,
-    width: "45%",
-    alignItems: "center",
-  },
-  confirmButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
   cancelButton: {
-    backgroundColor: "#7F3DFF",
-    padding: 10,
-    borderRadius: 5,
-    width: "45%",
+    backgroundColor: "#FF3B30",
+    paddingVertical: 15,
+    borderRadius: 10,
     alignItems: "center",
+    width: "45%",
   },
   cancelButtonText: {
     color: "#fff",
     fontWeight: "bold",
+    fontSize: 16,
   },
   bottomNav: {
     flexDirection: "row",
@@ -509,7 +580,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#ddd",
     paddingVertical: 10,
-    position: "absolute", // Ensure it stays at the bottom
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,

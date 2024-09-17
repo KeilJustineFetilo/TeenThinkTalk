@@ -2,6 +2,9 @@ import * as React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
+// Import ProfileContext provider
+import { ProfileProvider } from "./app/context/ProfileContext";
+
 // Import all screens
 import LoginScreen from "./app/screens/loginscreen";
 import SignUpScreen from "./app/screens/signUpScreen";
@@ -17,31 +20,35 @@ import CategoryScreen from "./app/screens/categoryScreen";
 import LifestyleScreen from "./app/screens/lifestyleScreen";
 import NutritionScreen from "./app/screens/nutritionScreen";
 import ReproductiveScreen from "./app/screens/reproductiveScreen";
+
 const Stack = createStackNavigator();
 
 function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="SignUp" component={SignUpScreen} />
-        <Stack.Screen name="UnlockAccount" component={UnlockAccount} />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
-        <Stack.Screen name="Gallery" component={GalleryScreen} />
-        <Stack.Screen name="BMI" component={BmiScreen} />
-        <Stack.Screen name="Hotline" component={HotlineScreen} />
-        <Stack.Screen name="Consultations" component={ConsultationScreen} />
-        <Stack.Screen name="Category" component={CategoryScreen} />
-        <Stack.Screen name="Lifestyle" component={LifestyleScreen} />
-        <Stack.Screen name="Nutrition" component={NutritionScreen} />
-        <Stack.Screen name="Reproductive" component={ReproductiveScreen} />
-        <Stack.Screen
-          name="EmailVerification"
-          component={EmailVerificationScreen}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    // Wrap the app with ProfileProvider
+    <ProfileProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="SignUp" component={SignUpScreen} />
+          <Stack.Screen name="UnlockAccount" component={UnlockAccount} />
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="Gallery" component={GalleryScreen} />
+          <Stack.Screen name="BMI" component={BmiScreen} />
+          <Stack.Screen name="Hotline" component={HotlineScreen} />
+          <Stack.Screen name="Consultations" component={ConsultationScreen} />
+          <Stack.Screen name="Category" component={CategoryScreen} />
+          <Stack.Screen name="Lifestyle" component={LifestyleScreen} />
+          <Stack.Screen name="Nutrition" component={NutritionScreen} />
+          <Stack.Screen name="Reproductive" component={ReproductiveScreen} />
+          <Stack.Screen
+            name="EmailVerification"
+            component={EmailVerificationScreen}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ProfileProvider>
   );
 }
 
