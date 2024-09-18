@@ -20,7 +20,8 @@ import CategoryScreen from "./app/screens/categoryScreen";
 import LifestyleScreen from "./app/screens/lifestyleScreen";
 import NutritionScreen from "./app/screens/nutritionScreen";
 import ReproductiveScreen from "./app/screens/reproductiveScreen";
-
+import SubmitScreen from "./app/screens/submitScreen";
+import ChatlistScreen from "./app/screens/chatlistScreen";
 const Stack = createStackNavigator();
 
 function App() {
@@ -42,6 +43,8 @@ function App() {
           <Stack.Screen name="Lifestyle" component={LifestyleScreen} />
           <Stack.Screen name="Nutrition" component={NutritionScreen} />
           <Stack.Screen name="Reproductive" component={ReproductiveScreen} />
+          <Stack.Screen name="Submit" component={SubmitScreen} />
+          <Stack.Screen name="Chatlist" component={ChatlistScreen} />
           <Stack.Screen
             name="EmailVerification"
             component={EmailVerificationScreen}

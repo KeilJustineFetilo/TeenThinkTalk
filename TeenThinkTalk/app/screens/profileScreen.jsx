@@ -24,7 +24,7 @@ import { doc, updateDoc } from "firebase/firestore"; // Firestore update functio
 // Function to format the date to MM/DD/YYYY
 const formatDate = (date) => {
   if (!date) return "N/A";
-  const formattedDate = new Date(date); 
+  const formattedDate = new Date(date);
   const month = String(formattedDate.getMonth() + 1).padStart(2, "0");
   const day = String(formattedDate.getDate()).padStart(2, "0");
   const year = formattedDate.getFullYear();
@@ -47,7 +47,8 @@ const calculateAge = (birthdate) => {
 };
 
 const ProfileScreen = ({ navigation }) => {
-  const { profileData, updateProfileData, clearProfileData } = useContext(ProfileContext);
+  const { profileData, updateProfileData, clearProfileData } =
+    useContext(ProfileContext);
 
   // Debugging: Log profile data after loading
   useEffect(() => {
@@ -65,12 +66,15 @@ const ProfileScreen = ({ navigation }) => {
   });
 
   const [age, setAge] = useState(calculateAge(profileData.birthdate));
-  const [selectedDate, setSelectedDate] = useState(new Date(profileData.birthdate || Date.now()));
+  const [selectedDate, setSelectedDate] = useState(
+    new Date(profileData.birthdate || Date.now())
+  );
   const [password, setPassword] = useState(""); // Store user password for re-authentication
-  const [showPicker, setShowPicker] = useState(false); 
+  const [showPicker, setShowPicker] = useState(false);
   // Separate editing states for each section
   const [isPersonalInfoEditable, setIsPersonalInfoEditable] = useState(false);
-  const [isAccountDetailsEditable, setIsAccountDetailsEditable] = useState(false);
+  const [isAccountDetailsEditable, setIsAccountDetailsEditable] =
+    useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
@@ -79,7 +83,8 @@ const ProfileScreen = ({ navigation }) => {
   }, [formData.birthdate]);
 
   // Handle changes to form inputs
-  const handleChange = (field, value) => setFormData({ ...formData, [field]: value });
+  const handleChange = (field, value) =>
+    setFormData({ ...formData, [field]: value });
 
   // Handle saving personal information
   const handleSavePersonalInfo = () => {
@@ -93,7 +98,6 @@ const ProfileScreen = ({ navigation }) => {
     updateProfileData(formData);
     setIsPersonalInfoEditable(false);
   };
-  
 
   // Update email in Firestore after email is verified
   const updateFirestoreEmail = async (newEmail) => {
@@ -107,7 +111,10 @@ const ProfileScreen = ({ navigation }) => {
       console.log("Email updated in Firestore!");
     } catch (error) {
       console.error("Error updating Firestore email:", error);
-      Alert.alert("Error", `Failed to update email in Firestore: ${error.message}`);
+      Alert.alert(
+        "Error",
+        `Failed to update email in Firestore: ${error.message}`
+      );
     }
   };
 
@@ -115,7 +122,10 @@ const ProfileScreen = ({ navigation }) => {
   const confirmEmailChange = async () => {
     try {
       if (!password) {
-        Alert.alert("Re-authentication Required", "Please enter your password to confirm the email change.");
+        Alert.alert(
+          "Re-authentication Required",
+          "Please enter your password to confirm the email change."
+        );
         return Promise.reject("Password required for email update");
       }
 
@@ -137,7 +147,10 @@ const ProfileScreen = ({ navigation }) => {
       );
 
       // Log profileData.id before updating Firestore
-      console.log("Updating Firestore email with profileData.id:", profileData.id);
+      console.log(
+        "Updating Firestore email with profileData.id:",
+        profileData.id
+      );
 
       await updateFirestoreEmail(formData.email.trim());
 
@@ -152,7 +165,10 @@ const ProfileScreen = ({ navigation }) => {
 
   // Handle saving account details, including email
   const handleSaveAccountDetails = async () => {
-    console.log("Saving account details. Email change:", formData.email !== profileData.email);
+    console.log(
+      "Saving account details. Email change:",
+      formData.email !== profileData.email
+    );
     if (formData.email !== profileData.email) {
       try {
         await confirmEmailChange();
@@ -202,7 +218,7 @@ const ProfileScreen = ({ navigation }) => {
       birthdate: currentDate.toISOString(),
       age: calculateAge(currentDate), // Recalculate and update age
     }));
-    
+
     // Update the age in the formData and state
     const updatedAge = calculateAge(currentDate);
     setAge(updatedAge); // Update the age state immediately
@@ -231,10 +247,14 @@ const ProfileScreen = ({ navigation }) => {
       {/* Profile Header */}
       <View style={styles.profileHeader}>
         <View style={styles.profileInfo}>
-          <Icon name="account-circle" size={70} color="#fff" />
+          <Icon name="account-circle" size={50} color="#fff" />
           <View>
-            <Text style={styles.profileName}>{formData.firstName} {formData.lastName}</Text>
-            <Text style={styles.profileSubtext}>{profileData.username || "Username"}</Text>
+            <Text style={styles.profileName}>
+              {formData.firstName} {formData.lastName}
+            </Text>
+            <Text style={styles.profileSubtext}>
+              {profileData.username || "Username"}
+            </Text>
           </View>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
@@ -256,7 +276,10 @@ const ProfileScreen = ({ navigation }) => {
 
           <Text style={styles.label}>First Name</Text>
           <TextInput
-            style={[styles.input, isPersonalInfoEditable ? styles.inputEditable : null]}
+            style={[
+              styles.input,
+              isPersonalInfoEditable ? styles.inputEditable : null,
+            ]}
             editable={isPersonalInfoEditable}
             value={formData.firstName}
             onChangeText={(value) => handleChange("firstName", value)}
@@ -264,7 +287,10 @@ const ProfileScreen = ({ navigation }) => {
 
           <Text style={styles.label}>Middle Name</Text>
           <TextInput
-            style={[styles.input, isPersonalInfoEditable ? styles.inputEditable : null]}
+            style={[
+              styles.input,
+              isPersonalInfoEditable ? styles.inputEditable : null,
+            ]}
             editable={isPersonalInfoEditable}
             value={formData.middleName}
             onChangeText={(value) => handleChange("middleName", value)}
@@ -272,7 +298,10 @@ const ProfileScreen = ({ navigation }) => {
 
           <Text style={styles.label}>Last Name</Text>
           <TextInput
-            style={[styles.input, isPersonalInfoEditable ? styles.inputEditable : null]}
+            style={[
+              styles.input,
+              isPersonalInfoEditable ? styles.inputEditable : null,
+            ]}
             editable={isPersonalInfoEditable}
             value={formData.lastName}
             onChangeText={(value) => handleChange("lastName", value)}
@@ -285,8 +314,14 @@ const ProfileScreen = ({ navigation }) => {
               if (isPersonalInfoEditable) setShowPicker(!showPicker);
             }}
             style={[
-              styles.input, 
-              isPersonalInfoEditable && { borderColor: "#673CC6", borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 10}
+              styles.input,
+              isPersonalInfoEditable && {
+                borderColor: "#673CC6",
+                borderWidth: 1,
+                borderRadius: 10,
+                paddingHorizontal: 8,
+                paddingVertical: 10,
+              },
             ]}
             disabled={!isPersonalInfoEditable}
           >
@@ -327,14 +362,16 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={styles.label}>Birthdate</Text>
               <TouchableOpacity
                 style={[
-                  styles.input, 
-                  isPersonalInfoEditable ? styles.inputEditable : null, 
-                  { justifyContent: "center" }
+                  styles.input,
+                  isPersonalInfoEditable ? styles.inputEditable : null,
+                  { justifyContent: "center" },
                 ]}
                 disabled={!isPersonalInfoEditable}
                 onPress={() => setShowDatePicker(true)}
               >
-                <Text style={styles.textInputText}>{formatDate(formData.birthdate)}</Text>
+                <Text style={styles.textInputText}>
+                  {formatDate(formData.birthdate)}
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -342,9 +379,9 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={styles.label}>Age</Text>
               <TextInput
                 style={[
-                  styles.input, 
+                  styles.input,
                   isPersonalInfoEditable ? styles.inputEditable : null,
-                  { height: 48 } // Adjust height to match Birthdate field
+                  { height: 48 }, // Adjust height to match Birthdate field
                 ]}
                 editable={false}
                 value={String(age)}
@@ -352,10 +389,12 @@ const ProfileScreen = ({ navigation }) => {
             </View>
           </View>
 
-
           <Text style={styles.label}>Address</Text>
           <TextInput
-            style={[styles.input, isPersonalInfoEditable ? styles.inputEditable : null]}
+            style={[
+              styles.input,
+              isPersonalInfoEditable ? styles.inputEditable : null,
+            ]}
             editable={isPersonalInfoEditable}
             value={formData.address}
             onChangeText={(value) => handleChange("address", value)}
@@ -363,10 +402,16 @@ const ProfileScreen = ({ navigation }) => {
 
           {isPersonalInfoEditable && (
             <View style={styles.editButtons}>
-              <TouchableOpacity style={styles.saveButton} onPress={handleSavePersonalInfo}>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSavePersonalInfo}
+              >
                 <Text style={styles.saveButtonText}>Save</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.cancelButton} onPress={handleCancelPersonalInfo}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleCancelPersonalInfo}
+              >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
@@ -378,7 +423,9 @@ const ProfileScreen = ({ navigation }) => {
           <View style={styles.sectionHeader}>
             <Text style={styles.cardTitle}>Account Details</Text>
             <TouchableOpacity
-              onPress={() => setIsAccountDetailsEditable(!isAccountDetailsEditable)}
+              onPress={() =>
+                setIsAccountDetailsEditable(!isAccountDetailsEditable)
+              }
             >
               <Icon name="edit" size={25} color="#673CC6" />
             </TouchableOpacity>
@@ -386,7 +433,10 @@ const ProfileScreen = ({ navigation }) => {
 
           <Text style={styles.label}>Email</Text>
           <TextInput
-            style={[styles.input, isAccountDetailsEditable ? styles.inputEditable : null]}
+            style={[
+              styles.input,
+              isAccountDetailsEditable ? styles.inputEditable : null,
+            ]}
             editable={isAccountDetailsEditable}
             value={formData.email}
             onChangeText={(value) => handleChange("email", value)}
@@ -405,10 +455,16 @@ const ProfileScreen = ({ navigation }) => {
               />
 
               <View style={styles.editButtons}>
-                <TouchableOpacity style={styles.saveButton} onPress={handleSaveAccountDetails}>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={handleSaveAccountDetails}
+                >
                   <Text style={styles.saveButtonText}>Save</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.cancelButton} onPress={handleCancelAccountDetails}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleCancelAccountDetails}
+                >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
@@ -419,17 +475,26 @@ const ProfileScreen = ({ navigation }) => {
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("Profile")}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("Profile")}
+        >
           <Icon name="person" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Profile</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("Home")}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("Home")}
+        >
           <Icon name="home" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("Chats")}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("Chats")}
+        >
           <Icon name="chat" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Chats</Text>
         </TouchableOpacity>

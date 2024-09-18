@@ -303,11 +303,13 @@ const HomeScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => {
-            navigation.navigate("Profile", { profileData }); // Pass profile data to ProfileScreen
+            navigation.navigate("Profile");
           }}
         >
           <Icon name="person" size={30} color="#673CC6" />
+          <Text style={styles.navButtonText}>Profile</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => {
@@ -315,9 +317,17 @@ const HomeScreen = ({ navigation, route }) => {
           }}
         >
           <Icon name="home" size={30} color="#673CC6" />
+          <Text style={styles.navButtonText}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => {
+            navigation.navigate("Chatlist");
+          }}
+        >
           <Icon name="chat" size={30} color="#673CC6" />
+          <Text style={styles.navButtonText}>Chats</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -519,9 +529,17 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#ddd",
     paddingVertical: 10,
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   navButton: {
     alignItems: "center",
+  },
+  navButtonText: {
+    fontSize: 12,
+    color: "#673CC6",
   },
 });
 

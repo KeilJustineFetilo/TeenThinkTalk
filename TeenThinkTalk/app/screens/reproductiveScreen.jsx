@@ -6,10 +6,12 @@ import Icon from "react-native-vector-icons/MaterialIcons"; // For icons
 const ReproductiveScreen = () => {
   const navigation = useNavigation();
 
-  const handlePress = (category) => {
-    // Handle navigation to the specific category screen
-    console.log(`${category} pressed`);
-    // navigation.navigate('SpecificCategoryScreen');
+  const handlePress = (category, areaOfConcern) => {
+    // Redirect to submit screen and pass the selected category and area of concern
+    navigation.navigate("Submit", {
+      category,
+      areaOfConcern,
+    });
   };
 
   return (
@@ -36,31 +38,44 @@ const ReproductiveScreen = () => {
           <View style={styles.horizontalLine} />
           <View style={styles.categoriesContainer}>
             <TouchableOpacity
-              onPress={() => handlePress("Puberty and development")}
+              onPress={() =>
+                handlePress("Reproductive Health", "Puberty and Development")
+              }
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>Puberty and Development</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handlePress("Sexual Health")}
+              onPress={() =>
+                handlePress("Reproductive Health", "Sexual Health")
+              }
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>Sexual Health</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handlePress("STI Prevention")}
+              onPress={() =>
+                handlePress("Reproductive Health", "STI Prevention")
+              }
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>STI Prevention</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handlePress("Family Planning")}
+              onPress={() =>
+                handlePress("Reproductive Health", "Family Planning")
+              }
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>Family Planning</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handlePress("Pregnancy and Parental Care")}
+              onPress={() =>
+                handlePress(
+                  "Reproductive Health",
+                  "Pregnancy and Parental Care"
+                )
+              }
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>

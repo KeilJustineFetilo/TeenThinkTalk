@@ -24,7 +24,10 @@ const EmailVerificationScreen = ({ navigation }) => {
           Alert.alert("Success", "Your email has been verified!");
           navigation.navigate("Login");
         } else {
-          Alert.alert("Not Verified", "Please check your email for the verification link.");
+          Alert.alert(
+            "Not Verified",
+            "Please check your email for the verification link."
+          );
         }
       })
       .catch((error) => {
@@ -36,10 +39,14 @@ const EmailVerificationScreen = ({ navigation }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Email Verification</Text>
       <Text style={styles.instruction}>
-        Please check your email and click on the verification link to verify your account.
+        Please check your email and click on the verification link to verify
+        your account.
       </Text>
 
-      <TouchableOpacity style={styles.verifyButton} onPress={handleCheckVerification}>
+      <TouchableOpacity
+        style={styles.verifyButton}
+        onPress={handleCheckVerification}
+      >
         <Text style={styles.buttonText}>Check Verification Status</Text>
       </TouchableOpacity>
     </View>

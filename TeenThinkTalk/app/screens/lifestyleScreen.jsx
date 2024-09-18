@@ -6,10 +6,12 @@ import Icon from "react-native-vector-icons/MaterialIcons"; // For icons
 const LifestyleScreen = () => {
   const navigation = useNavigation();
 
-  const handlePress = (category) => {
-    // Handle navigation to the specific category screen
-    console.log(`${category} pressed`);
-    // navigation.navigate('SpecificCategoryScreen');
+  const handlePress = (category, areaOfConcern) => {
+    // Redirect to submit screen and pass the selected category and area of concern
+    navigation.navigate("Submit", {
+      category,
+      areaOfConcern,
+    });
   };
 
   return (
@@ -36,7 +38,9 @@ const LifestyleScreen = () => {
           <View style={styles.horizontalLine} />
           <View style={styles.categoriesContainer}>
             <TouchableOpacity
-              onPress={() => handlePress("Physical Activity")}
+              onPress={() =>
+                handlePress("Lifestyle", "Physical Activity & Exercise")
+              }
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>
@@ -44,7 +48,9 @@ const LifestyleScreen = () => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handlePress("Mental Health")}
+              onPress={() =>
+                handlePress("Lifestyle", "Mental Health & Well Being")
+              }
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>
@@ -52,19 +58,19 @@ const LifestyleScreen = () => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handlePress("Daily Routine")}
+              onPress={() => handlePress("Lifestyle", "Daily Routine & Habits")}
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>Daily Routine & Habits</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handlePress("Stress Management")}
+              onPress={() => handlePress("Lifestyle", "Stress Management")}
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>Stress Management</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handlePress("Sleep Pattern")}
+              onPress={() => handlePress("Lifestyle", "Sleep Pattern & Habits")}
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>Sleep Pattern & Habits</Text>
@@ -104,7 +110,7 @@ const LifestyleScreen = () => {
   );
 };
 
-// Styles
+// Styles for LifestyleScreen
 const styles = StyleSheet.create({
   container: {
     flex: 1,

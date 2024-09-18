@@ -6,10 +6,12 @@ import Icon from "react-native-vector-icons/MaterialIcons"; // For icons
 const NutritionScreen = () => {
   const navigation = useNavigation();
 
-  const handlePress = (category) => {
-    // Handle navigation to the specific category screen
-    console.log(`${category} pressed`);
-    // navigation.navigate('SpecificCategoryScreen');
+  const handlePress = (category, areaOfConcern) => {
+    // Redirect to submit screen and pass the selected category and area of concern
+    navigation.navigate("Submit", {
+      category,
+      areaOfConcern,
+    });
   };
 
   return (
@@ -36,31 +38,33 @@ const NutritionScreen = () => {
           <View style={styles.horizontalLine} />
           <View style={styles.categoriesContainer}>
             <TouchableOpacity
-              onPress={() => handlePress("Balanced Diet")}
+              onPress={() => handlePress("Nutrition", "Balanced Diet")}
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>Balanced Diet</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handlePress("Weight Management")}
+              onPress={() => handlePress("Nutrition", "Weight Management")}
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>Weight Management</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handlePress("Eating Disorder")}
+              onPress={() => handlePress("Nutrition", "Eating Disorder")}
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>Eating Disorder</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handlePress("Healthy Snacking")}
+              onPress={() => handlePress("Nutrition", "Healthy Snacking")}
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>Healthy Snacking</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handlePress("Food Allergies and Intolerance")}
+              onPress={() =>
+                handlePress("Nutrition", "Food Allergies and Intolerance")
+              }
               style={styles.categoryButton}
             >
               <Text style={styles.categoryText}>
