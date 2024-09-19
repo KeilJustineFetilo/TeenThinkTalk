@@ -29,6 +29,7 @@ function App() {
     // Wrap the app with ProfileProvider
     <ProfileProvider>
       <NavigationContainer>
+        {/* Student Screens */}
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="SignUp" component={SignUpScreen} />
@@ -50,6 +51,8 @@ function App() {
             component={EmailVerificationScreen}
           />
         </Stack.Navigator>
+
+        {/* Health Expert Screens */}
       </NavigationContainer>
     </ProfileProvider>
   );
