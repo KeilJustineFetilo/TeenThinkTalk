@@ -5,7 +5,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 // Import ProfileContext provider
 import { ProfileProvider } from "./app/context/ProfileContext";
 
-// Import all screens
+// Students screens
 import LoginScreen from "./app/screens/loginscreen";
 import SignUpScreen from "./app/screens/signUpScreen";
 import UnlockAccount from "./app/screens/unlockAccount";
@@ -22,6 +22,8 @@ import NutritionScreen from "./app/screens/nutritionScreen";
 import ReproductiveScreen from "./app/screens/reproductiveScreen";
 import SubmitScreen from "./app/screens/submitScreen";
 import ChatlistScreen from "./app/screens/chatlistScreen";
+// Expert Section
+import XLoginScreen from "./app/screens/healthExperts/Xloginscreen";
 const Stack = createStackNavigator();
 
 function App() {
@@ -50,9 +52,9 @@ function App() {
             name="EmailVerification"
             component={EmailVerificationScreen}
           />
+          {/* Expert Section */}
+          <Stack.Screen name="XLogin" component={XLoginScreen} />
         </Stack.Navigator>
-
-        {/* Health Expert Screens */}
       </NavigationContainer>
     </ProfileProvider>
   );

@@ -47,7 +47,10 @@ const LoginScreen = ({ navigation }) => {
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
-        Alert.alert("Invalid Credentials", "The username you entered does not exist.");
+        Alert.alert(
+          "Invalid Credentials",
+          "The username you entered does not exist."
+        );
         return;
       }
 
@@ -65,7 +68,6 @@ const LoginScreen = ({ navigation }) => {
 
       // Navigate to the Home screen and pass the profile data
       navigation.navigate("Home");
-
     } catch (error) {
       console.error("Error logging in:", error);
 
@@ -87,7 +89,10 @@ const LoginScreen = ({ navigation }) => {
 
   const handleForgotPassword = async () => {
     if (!username) {
-      Alert.alert("Error", "Please enter your username to reset your password.");
+      Alert.alert(
+        "Error",
+        "Please enter your username to reset your password."
+      );
       return;
     }
 
@@ -155,7 +160,7 @@ const LoginScreen = ({ navigation }) => {
 
       <TouchableOpacity
         onPress={() => {
-          /* Handle login as Health Expert */
+          navigation.navigate("XLogin");
         }}
       >
         <Text style={styles.loginAsExpertText}>Login as Health Expert</Text>
