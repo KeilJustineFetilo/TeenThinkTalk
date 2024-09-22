@@ -24,6 +24,7 @@ import SubmitScreen from "./app/screens/submitScreen";
 import ChatlistScreen from "./app/screens/chatlistScreen";
 // Expert Section
 import XLoginScreen from "./app/screens/healthExperts/Xloginscreen";
+import XHomeScreen from "./app/screens/healthExperts/XhomeScreen";
 const Stack = createStackNavigator();
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
           />
           {/* Expert Section */}
           <Stack.Screen name="XLogin" component={XLoginScreen} />
+          <Stack.Screen name="XHome" component={XHomeScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </ProfileProvider>

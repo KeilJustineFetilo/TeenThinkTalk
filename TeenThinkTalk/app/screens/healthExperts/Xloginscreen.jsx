@@ -20,7 +20,7 @@ const XLoginScreen = ({ navigation }) => {
       {/* Display the logo */}
       <Image source={logo} style={styles.logo} />
 
-      <Text style={styles.welcomeText}>Welcome, Health Expert!</Text>
+      <Text style={styles.welcomeText}>Welcome, Health Doc!</Text>
       <Text style={styles.subText}>Enter your credentials to login</Text>
 
       <TextInput
@@ -41,7 +41,12 @@ const XLoginScreen = ({ navigation }) => {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.loginButton}>
+      <TouchableOpacity
+        style={styles.loginButton}
+        onPress={() => {
+          navigation.navigate("XHome");
+        }}
+      >
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
@@ -51,7 +56,7 @@ const XLoginScreen = ({ navigation }) => {
 
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate("StudentLogin");
+          navigation.navigate("Login");
         }}
       >
         <Text style={styles.loginAsExpertText}>Login as Student</Text>
