@@ -344,6 +344,39 @@ const XHomeScreen = ({ navigation, route }) => {
           )}
         />
       </Animated.View>
+
+      {/* Bottom Navigation */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => {
+            navigation.navigate("Profile"); // Replace with your navigation logic
+          }}
+        >
+          <Icon name="person" size={30} color="#673CC6" />
+          <Text style={styles.navButtonText}>Profile</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => {
+            navigation.navigate("XHome"); // Replace with your navigation logic
+          }}
+        >
+          <Icon name="home" size={30} color="#673CC6" />
+          <Text style={styles.navButtonText}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => {
+            navigation.navigate("Chatlist"); // Replace with your navigation logic
+          }}
+        >
+          <Icon name="chat" size={30} color="#673CC6" />
+          <Text style={styles.navButtonText}>Chats</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -582,6 +615,25 @@ const styles = StyleSheet.create({
     color: "#fff",
     paddingHorizontal: 20,
     paddingVertical: 10,
+  },
+  bottomNav: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+    paddingVertical: 10,
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  navButton: {
+    alignItems: "center",
+  },
+  navButtonText: {
+    fontSize: 12,
+    color: "#673CC6",
   },
 });
 
