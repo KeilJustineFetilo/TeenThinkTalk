@@ -25,6 +25,9 @@ import ChatlistScreen from "./app/screens/chatlistScreen";
 // Expert Section
 import XLoginScreen from "./app/screens/healthExperts/Xloginscreen";
 import XHomeScreen from "./app/screens/healthExperts/XhomeScreen";
+import XConsultationScreen from "./app/screens/healthExperts/XconsultationScreen";
+import XGalleryScreen from "./app/screens/healthExperts/XgalleryScreen";
+import XHotlineScreen from "./app/screens/healthExperts/XhotlineScreen";
 const Stack = createStackNavigator();
 
 function App() {
@@ -56,6 +59,9 @@ function App() {
           {/* Expert Section */}
           <Stack.Screen name="XLogin" component={XLoginScreen} />
           <Stack.Screen name="XHome" component={XHomeScreen} />
+          <Stack.Screen name="XConsultations" component={XConsultationScreen} />
+          <Stack.Screen name="XGallery" component={XGalleryScreen} />
+          <Stack.Screen name="XHotlines" component={XHotlineScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </ProfileProvider>

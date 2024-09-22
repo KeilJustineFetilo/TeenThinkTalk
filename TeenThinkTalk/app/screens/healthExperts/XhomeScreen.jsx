@@ -276,8 +276,7 @@ const XHomeScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => {
-            console.log("Consultations clicked");
-            toggleMenu(); // Close the menu
+            navigation.navigate("XConsultations"); // Replace with your navigation logic
           }}
         >
           <Icon name="local-hospital" size={25} color="#fff" />
@@ -286,8 +285,7 @@ const XHomeScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => {
-            console.log("Gallery clicked");
-            toggleMenu(); // Close the menu
+            navigation.navigate("XGallery"); // Replace with your navigation logic
           }}
         >
           <Icon name="photo" size={25} color="#fff" />
@@ -306,8 +304,7 @@ const XHomeScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => {
-            console.log("Hotlines clicked");
-            toggleMenu(); // Close the menu
+            navigation.navigate("XHotlines"); // Replace with your navigation logic
           }}
         >
           <Icon name="call" size={25} color="#fff" />
