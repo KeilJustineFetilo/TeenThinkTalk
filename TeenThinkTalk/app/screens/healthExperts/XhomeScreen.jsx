@@ -7,15 +7,15 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Modal,
-  Dimensions,
   Animated,
+  ScrollView,
+  Dimensions,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons"; // For icons
 
 const { width, height } = Dimensions.get("window");
 
-const announcements = [
+const announcementsData = [
   {
     id: "1",
     title: "Announcement 1",
@@ -33,7 +33,7 @@ const announcements = [
   },
 ];
 
-const posts = [
+const postsData = [
   {
     id: "1",
     user: "John Doe",
@@ -51,23 +51,26 @@ const posts = [
 ];
 
 const XHomeScreen = ({ navigation, route }) => {
-  const { profileData } = route.params || {}; // Get the passed profile data from the route
+  const { profileData } = route.params || {};
   const [menuVisible, setMenuVisible] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [comments, setComments] = useState({});
   const [commentText, setCommentText] = useState("");
-  const [activeComment, setActiveComment] = useState(""); // Track active comment input
-  const [postContent, setPostContent] = useState(""); // For creating new posts
+  const [activeComment, setActiveComment] = useState("");
+  const [postContent, setPostContent] = useState("");
+  const [posts, setPosts] = useState(postsData);
+  const [announcements, setAnnouncements] = useState(announcementsData);
+  const [showAnnouncements, setShowAnnouncements] = useState(true);
 
-  // Animated value for the side menu
-  const slideAnim = useRef(new Animated.Value(-width)).current; // Start off the screen
-  const slideNotifAnim = useRef(new Animated.Value(width)).current; // Notification off the screen (right)
+  // Animated values
+  const slideAnim = useRef(new Animated.Value(-width)).current;
+  const slideNotifAnim = useRef(new Animated.Value(width)).current;
 
   // Toggle side menu
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
     Animated.timing(slideAnim, {
-      toValue: menuVisible ? -width : 0, // Slide in or out
+      toValue: menuVisible ? -width : 0,
       duration: 300,
       useNativeDriver: true,
     }).start();
@@ -77,10 +80,15 @@ const XHomeScreen = ({ navigation, route }) => {
   const toggleNotification = () => {
     setNotificationVisible(!notificationVisible);
     Animated.timing(slideNotifAnim, {
-      toValue: notificationVisible ? width : 0, // Slide in or out
+      toValue: notificationVisible ? width : 0,
       duration: 300,
       useNativeDriver: true,
     }).start();
+  };
+
+  // Toggle announcements
+  const toggleAnnouncements = () => {
+    setShowAnnouncements(!showAnnouncements);
   };
 
   // Handle adding comment
@@ -90,21 +98,13 @@ const XHomeScreen = ({ navigation, route }) => {
       ...prevComments,
       [postId]: [...(prevComments[postId] || []), commentText],
     }));
-    setCommentText(""); // Clear input
-    setActiveComment(""); // Hide comment input after posting
-  };
-
-  // Handle deleting comment
-  const handleDeleteComment = (postId, index) => {
-    setComments((prevComments) => ({
-      ...prevComments,
-      [postId]: prevComments[postId].filter((_, i) => i !== index),
-    }));
+    setCommentText("");
+    setActiveComment("");
   };
 
   return (
     <View style={styles.container}>
-      {/* Header with Menu, Notifications, and User info */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
           <Icon name="menu" size={30} color="#673CC6" />
@@ -115,7 +115,7 @@ const XHomeScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Display the user name if available */}
+      {/* Display user name */}
       {profileData && (
         <View style={styles.userInfo}>
           <Text style={styles.welcomeText}>
@@ -127,31 +127,44 @@ const XHomeScreen = ({ navigation, route }) => {
       {/* Announcements Section */}
       <View style={styles.announcementsHeader}>
         <Text style={styles.sectionTitle}>Announcements</Text>
-        <TouchableOpacity
-          style={styles.addAnnouncementButton}
-          onPress={() => {
-            // Placeholder function for adding a new announcement
-            console.log("Add announcement clicked");
-          }}
-        >
-          <Icon name="add" size={30} color="#673CC6" />
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        data={announcements}
-        horizontal
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.announcementContainer}>
-            <Image
-              source={{ uri: item.image }}
-              style={styles.announcementImage}
+        <View style={styles.announcementControls}>
+          <TouchableOpacity
+            style={styles.hideAnnouncementButton}
+            onPress={toggleAnnouncements}
+          >
+            <Icon
+              name={showAnnouncements ? "arrow-drop-up" : "arrow-drop-down"}
+              size={30}
+              color="#673CC6"
             />
-          </View>
-        )}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.announcementList}
-      />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.addAnnouncementButton}
+            onPress={() => {
+              console.log("Add announcement clicked");
+            }}
+          >
+            <Icon name="add" size={30} color="#673CC6" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      {showAnnouncements && (
+        <FlatList
+          data={announcements}
+          horizontal
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.announcementContainer}>
+              <Image
+                source={{ uri: item.image }}
+                style={styles.announcementImage}
+              />
+            </View>
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.announcementList}
+        />
+      )}
 
       {/* Create Post Section */}
       <View style={styles.createPostContainer}>
@@ -183,11 +196,9 @@ const XHomeScreen = ({ navigation, route }) => {
       </View>
 
       {/* Posts Section */}
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.postContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {posts.map((item) => (
+          <View key={item.id} style={styles.postContainer}>
             <View style={styles.postHeader}>
               <Icon name="account-circle" size={40} color="#673CC6" />
               <Text style={styles.postUser}>{item.user}</Text>
@@ -197,7 +208,6 @@ const XHomeScreen = ({ navigation, route }) => {
               <Image source={{ uri: item.image }} style={styles.postImage} />
             )}
             <View style={styles.actionsRow}>
-              {/* Like Button */}
               <TouchableOpacity onPress={() => console.log("Like clicked")}>
                 <Icon
                   name={item.liked ? "thumb-up" : "thumb-up-off-alt"}
@@ -205,9 +215,7 @@ const XHomeScreen = ({ navigation, route }) => {
                   color="#673CC6"
                 />
               </TouchableOpacity>
-              {/* Separator Line */}
               <View style={styles.separatorVertical} />
-              {/* Comment Button */}
               <TouchableOpacity
                 onPress={() =>
                   setActiveComment(activeComment === item.id ? "" : item.id)
@@ -216,7 +224,6 @@ const XHomeScreen = ({ navigation, route }) => {
                 <Icon name="comment" size={25} color="#673CC6" />
               </TouchableOpacity>
             </View>
-            {/* Comment Input and Send Button */}
             {activeComment === item.id && (
               <View style={styles.commentSection}>
                 <TextInput
@@ -235,7 +242,6 @@ const XHomeScreen = ({ navigation, route }) => {
                 </TouchableOpacity>
               </View>
             )}
-            {/* Comment List */}
             <View style={styles.commentList}>
               {comments[item.id] &&
                 comments[item.id].map((comment, index) => (
@@ -250,9 +256,94 @@ const XHomeScreen = ({ navigation, route }) => {
                 ))}
             </View>
           </View>
-        )}
-        showsVerticalScrollIndicator={false}
-      />
+        ))}
+      </ScrollView>
+
+      {/* Side Menu */}
+      <Animated.View
+        style={[styles.sideMenu, { transform: [{ translateX: slideAnim }] }]}
+      >
+        <View style={styles.menuHeader}>
+          <Text style={styles.menuTitle}>Menu</Text>
+          <TouchableOpacity onPress={toggleMenu}>
+            <Icon name="close" size={30} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Add this separator */}
+        <View style={styles.separator} />
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => {
+            console.log("Consultations clicked");
+            toggleMenu(); // Close the menu
+          }}
+        >
+          <Icon name="local-hospital" size={25} color="#fff" />
+          <Text style={styles.menuItemText}>Consultations</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => {
+            console.log("Gallery clicked");
+            toggleMenu(); // Close the menu
+          }}
+        >
+          <Icon name="photo" size={25} color="#fff" />
+          <Text style={styles.menuItemText}>Gallery</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => {
+            console.log("BMI Calculator clicked");
+            toggleMenu(); // Close the menu
+          }}
+        >
+          <Icon name="apps" size={25} color="#fff" />
+          <Text style={styles.menuItemText}>BMI Calculator</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => {
+            console.log("Hotlines clicked");
+            toggleMenu(); // Close the menu
+          }}
+        >
+          <Icon name="call" size={25} color="#fff" />
+          <Text style={styles.menuItemText}>Hotlines</Text>
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Notification Bar */}
+      <Animated.View
+        style={[
+          styles.notificationBar,
+          { transform: [{ translateX: slideNotifAnim }] },
+        ]}
+      >
+        <View style={styles.notificationHeader}>
+          <Text style={styles.menuTitle}>Notifications</Text>
+          <TouchableOpacity onPress={toggleNotification}>
+            <Icon name="close" size={30} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Add this separator */}
+        <View style={styles.separator} />
+
+        <FlatList
+          data={[
+            { id: "1", text: "New Announcement has been added" },
+            { id: "2", text: "Lorem Ipsum Dolor" },
+            { id: "3", text: "Lorem Ipsum Dolor" },
+          ]}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <Text style={styles.notificationItem}>{item.text}</Text>
+          )}
+        />
+      </Animated.View>
     </View>
   );
 };
@@ -297,15 +388,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
   },
+  announcementControls: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#3C2257",
   },
   addAnnouncementButton: {
-    backgroundColor: "#E0D7F6",
-    padding: 10,
-    borderRadius: 50,
+    marginLeft: 10,
+  },
+  hideAnnouncementButton: {
+    marginLeft: 10,
   },
   announcementList: {
     paddingVertical: 10,
@@ -347,15 +443,13 @@ const styles = StyleSheet.create({
     color: "#3C2257",
   },
   addImageButton: {
-    backgroundColor: "#E0D7F6",
-    padding: 10,
-    borderRadius: 50,
     marginRight: 10,
   },
   postButton: {
-    backgroundColor: "#E0D7F6",
-    padding: 10,
-    borderRadius: 50,
+    marginLeft: 10,
+  },
+  scrollContainer: {
+    paddingBottom: 20,
   },
   postContainer: {
     backgroundColor: "#fff",
@@ -402,6 +496,11 @@ const styles = StyleSheet.create({
     width: 1,
     backgroundColor: "#ddd",
   },
+  separator: {
+    height: 2,
+    backgroundColor: "#ddd",
+    marginVertical: 10, // Adjust for space between the separator and elements
+  },
   commentSection: {
     flexDirection: "row",
     alignItems: "center",
@@ -429,6 +528,60 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginBottom: 5,
+  },
+  sideMenu: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: "70%",
+    backgroundColor: "#3C2257",
+    zIndex: 10,
+    paddingVertical: 40,
+  },
+  menuHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+  menuTitle: {
+    fontSize: 18,
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: "#fff",
+    marginLeft: 10,
+  },
+  notificationBar: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: "70%",
+    backgroundColor: "#3C2257",
+    zIndex: 10,
+    paddingVertical: 40,
+  },
+  notificationHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+  notificationItem: {
+    fontSize: 16,
+    color: "#fff",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
 });
 

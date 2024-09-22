@@ -20,7 +20,7 @@ const XLoginScreen = ({ navigation }) => {
       {/* Display the logo */}
       <Image source={logo} style={styles.logo} />
 
-      <Text style={styles.welcomeText}>Welcome, Health Doc!</Text>
+      <Text style={styles.welcomeText}>Welcome, Doc!</Text>
       <Text style={styles.subText}>Enter your credentials to login</Text>
 
       <TextInput
