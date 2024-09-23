@@ -51,7 +51,9 @@ const postsData = [
 ];
 
 const XHomeScreen = ({ navigation, route }) => {
-  const { profileData } = route.params || {};
+  // Use optional chaining to safely access params
+  const profileData = route?.params?.profileData || {}; // Fallback to an empty object if no params are passed
+
   const [menuVisible, setMenuVisible] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [comments, setComments] = useState({});
@@ -116,13 +118,11 @@ const XHomeScreen = ({ navigation, route }) => {
       </View>
 
       {/* Display user name */}
-      {profileData && (
-        <View style={styles.userInfo}>
-          <Text style={styles.welcomeText}>
-            Welcome, {profileData.username || "User"}!
-          </Text>
-        </View>
-      )}
+      <View style={styles.userInfo}>
+        <Text style={styles.welcomeText}>
+          Welcome, {profileData.username || "User"}!
+        </Text>
+      </View>
 
       {/* Announcements Section */}
       <View style={styles.announcementsHeader}>
@@ -270,13 +270,12 @@ const XHomeScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Add this separator */}
         <View style={styles.separator} />
 
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => {
-            navigation.navigate("XConsultations"); // Replace with your navigation logic
+            navigation.navigate("XConsultations");
           }}
         >
           <Icon name="local-hospital" size={25} color="#fff" />
@@ -285,7 +284,7 @@ const XHomeScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => {
-            navigation.navigate("XGallery"); // Replace with your navigation logic
+            navigation.navigate("XGallery");
           }}
         >
           <Icon name="photo" size={25} color="#fff" />
@@ -295,7 +294,7 @@ const XHomeScreen = ({ navigation, route }) => {
           style={styles.menuItem}
           onPress={() => {
             console.log("BMI Calculator clicked");
-            toggleMenu(); // Close the menu
+            toggleMenu();
           }}
         >
           <Icon name="apps" size={25} color="#fff" />
@@ -304,7 +303,7 @@ const XHomeScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => {
-            navigation.navigate("XHotlines"); // Replace with your navigation logic
+            navigation.navigate("XHotlines");
           }}
         >
           <Icon name="call" size={25} color="#fff" />
@@ -326,7 +325,6 @@ const XHomeScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Add this separator */}
         <View style={styles.separator} />
 
         <FlatList
@@ -347,7 +345,7 @@ const XHomeScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => {
-            navigation.navigate("Profile"); // Replace with your navigation logic
+            navigation.navigate("XProfile");
           }}
         >
           <Icon name="person" size={30} color="#673CC6" />
@@ -357,7 +355,7 @@ const XHomeScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => {
-            navigation.navigate("XHome"); // Replace with your navigation logic
+            navigation.navigate("XHome");
           }}
         >
           <Icon name="home" size={30} color="#673CC6" />
@@ -367,7 +365,7 @@ const XHomeScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => {
-            navigation.navigate("Chatlist"); // Replace with your navigation logic
+            navigation.navigate("Chatlist");
           }}
         >
           <Icon name="chat" size={30} color="#673CC6" />

@@ -9,16 +9,16 @@ import {
   Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { ProfileContext } from "../context/ProfileContext";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { Picker } from "@react-native-picker/picker";
-import { auth } from "../../config";
+import { XProfileContext } from "../../context/XProfileContext";
+import { db, auth } from "../../../config"; // Firebase Firestore and Auth
 import {
   reauthenticateWithCredential,
   EmailAuthProvider,
   verifyBeforeUpdateEmail,
   signOut,
 } from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore"; // Firestore update functions
+import DateTimePicker from "@react-native-community/datetimepicker"; // Date picker for birthdate
 
 // Function to format the date to MM/DD/YYYY
 const formatDate = (date) => {
@@ -45,14 +45,9 @@ const calculateAge = (birthdate) => {
   return age;
 };
 
-const ProfileScreen = ({ navigation }) => {
+const XProfileScreen = ({ navigation }) => {
   const { profileData, updateProfileData, clearProfileData } =
-    useContext(ProfileContext);
-
-  // Debugging: Log profile data after loading
-  useEffect(() => {
-    console.log("Profile Data in ProfileScreen:", profileData);
-  }, [profileData]);
+    useContext(XProfileContext);
 
   const [formData, setFormData] = useState({
     firstName: profileData.firstName,
@@ -61,104 +56,53 @@ const ProfileScreen = ({ navigation }) => {
     address: profileData.address,
     email: profileData.email,
     birthdate: profileData.birthdate,
-    sex: profileData.sex || "Male", // Default to Male if not set
+    sex: profileData.sex || "Male", // Default to "Male" if not provided
+    expertise: profileData.expertise,
   });
 
   const [age, setAge] = useState(calculateAge(profileData.birthdate));
   const [selectedDate, setSelectedDate] = useState(
     new Date(profileData.birthdate || Date.now())
   );
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [password, setPassword] = useState(""); // Store user password for re-authentication
-  const [showPicker, setShowPicker] = useState(false);
   const [isPersonalInfoEditable, setIsPersonalInfoEditable] = useState(false);
   const [isAccountDetailsEditable, setIsAccountDetailsEditable] =
     useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
-    const updatedAge = calculateAge(formData.birthdate);
-    setFormData((prevData) => ({ ...prevData, age: updatedAge })); // Update the formData with recalculated age
-  }, [formData.birthdate]);
+    setFormData({
+      firstName: profileData.firstName,
+      lastName: profileData.lastName,
+      middleName: profileData.middleName,
+      address: profileData.address,
+      email: profileData.email,
+      birthdate: profileData.birthdate,
+      sex: profileData.sex || "Male",
+      expertise: profileData.expertise,
+    });
+    setAge(calculateAge(profileData.birthdate));
+  }, [profileData]);
 
-  // Handle changes to form inputs
-  const handleChange = (field, value) =>
+  const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
+  };
 
-  // Handle saving personal information
   const handleSavePersonalInfo = async () => {
     try {
       const updatedFormData = {
         ...formData,
         birthdate: new Date(formData.birthdate).toISOString(), // Ensure birthdate is a proper date string
-        age: calculateAge(formData.birthdate), // Ensure the age is up-to-date
+        age: calculateAge(formData.birthdate),
       };
-
-      // Update profile data using context (no direct Firestore interaction here)
       await updateProfileData(updatedFormData);
-      setIsPersonalInfoEditable(false); // Exit edit mode
+      setIsPersonalInfoEditable(false);
     } catch (error) {
       console.error("Error saving personal info:", error);
       Alert.alert("Error", "Failed to save personal information.");
     }
   };
 
-  // Handle email update with verifyBeforeUpdateEmail
-  const confirmEmailChange = async () => {
-    try {
-      if (!password) {
-        Alert.alert(
-          "Re-authentication Required",
-          "Please enter your password to confirm the email change."
-        );
-        return Promise.reject("Password required for email update");
-      }
-
-      const user = auth.currentUser;
-      const credential = EmailAuthProvider.credential(user.email, password);
-
-      console.log("Re-authenticating user with email:", user.email);
-
-      // Re-authenticate the user
-      await reauthenticateWithCredential(user, credential);
-      console.log("Re-authentication successful");
-
-      await verifyBeforeUpdateEmail(user, formData.email.trim());
-      console.log("Verification email sent to new address!");
-
-      Alert.alert(
-        "Verification Email Sent",
-        "A verification link has been sent to your email. Please check your inbox and click the link to verify your account."
-      );
-
-      // After email verification, update the profile in Firestore
-      await updateProfileData({ email: formData.email.trim() });
-
-      await signOut(auth);
-      navigation.navigate("Login");
-    } catch (error) {
-      console.error("Error updating email:", error);
-      Alert.alert("Error", error.message || "Failed to update email.");
-      return Promise.reject(error);
-    }
-  };
-
-  // Handle saving account details, including email
-  const handleSaveAccountDetails = async () => {
-    console.log(
-      "Saving account details. Email change:",
-      formData.email !== profileData.email
-    );
-    if (formData.email !== profileData.email) {
-      try {
-        await confirmEmailChange();
-      } catch (error) {
-        return; // If email update fails, prevent saving
-      }
-    }
-    setIsAccountDetailsEditable(false);
-  };
-
-  // Cancel personal information changes
   const handleCancelPersonalInfo = () => {
     // Reset only personal information, without affecting the email
     setFormData((prevFormData) => ({
@@ -174,34 +118,49 @@ const ProfileScreen = ({ navigation }) => {
     setAge(calculateAge(profileData.birthdate)); // Reset the age based on the original birthdate
     setIsPersonalInfoEditable(false);
   };
-  // Cancel account details changes
+
+  const handleSaveAccountDetails = async () => {
+    try {
+      const user = auth.currentUser;
+      if (password && formData.email !== profileData.email) {
+        const credential = EmailAuthProvider.credential(user.email, password);
+        await reauthenticateWithCredential(user, credential);
+        await verifyBeforeUpdateEmail(user, formData.email);
+        await updateFirestoreEmail(formData.email);
+        await signOut(auth);
+        navigation.navigate("XLogin");
+      } else {
+        Alert.alert("Error", "Please provide a password for email update.");
+      }
+      setIsAccountDetailsEditable(false);
+    } catch (error) {
+      console.error("Error updating email:", error);
+      Alert.alert("Error", error.message || "Failed to update email.");
+    }
+  };
+
+  const updateFirestoreEmail = async (newEmail) => {
+    if (!profileData.id) throw new Error("Profile ID is missing.");
+    const userDocRef = doc(db, "user-teen", profileData.id);
+    await updateDoc(userDocRef, { email: newEmail });
+  };
+
   const handleCancelAccountDetails = () => {
-    setFormData({
-      ...formData,
-      email: profileData.email,
-    });
-    setPassword(""); // Clear password input
+    setFormData({ ...formData, email: profileData.email });
+    setPassword("");
     setIsAccountDetailsEditable(false);
   };
 
-  // Handle date changes
   const onChangeDate = (event, selectedDate) => {
     const currentDate = selectedDate || new Date(formData.birthdate);
     setShowDatePicker(false);
-    setSelectedDate(currentDate);
-
-    setFormData((prevData) => ({
-      ...prevData,
-      birthdate: currentDate.toISOString(),
-      age: calculateAge(currentDate), // Recalculate and update age
-    }));
+    setFormData({ ...formData, birthdate: currentDate.toISOString() });
     setAge(calculateAge(currentDate));
   };
 
-  // Handle logout
   const handleLogout = () => {
     clearProfileData();
-    navigation.navigate("Login");
+    navigation.navigate("XLogin");
   };
 
   return (
@@ -226,7 +185,7 @@ const ProfileScreen = ({ navigation }) => {
               {formData.firstName} {formData.lastName}
             </Text>
             <Text style={styles.profileSubtext}>
-              {profileData.username || "Username"}
+              {formData.expertise}
             </Text>
           </View>
         </View>
@@ -280,14 +239,14 @@ const ProfileScreen = ({ navigation }) => {
             onChangeText={(value) => handleChange("lastName", value)}
           />
 
-          {/* Sex Picker */}
           <Text style={styles.label}>Sex</Text>
           <TextInput
             style={styles.input}
             value={formData.sex}
-            editable={false}
+            editable={false} // Sex is non-editable for experts
           />
 
+          {/* Birthdate and Age in the same row */}
           <View style={styles.birthdateContainer}>
             <View style={styles.birthdateInput}>
               <Text style={styles.label}>Birthdate</Text>
@@ -309,11 +268,7 @@ const ProfileScreen = ({ navigation }) => {
             <View style={styles.ageContainer}>
               <Text style={styles.label}>Age</Text>
               <TextInput
-                style={[
-                  styles.input,
-                  isPersonalInfoEditable,
-                  { height: 48 },
-                ]}
+                style={styles.input}
                 editable={false}
                 value={String(age)}
               />
@@ -408,7 +363,7 @@ const ProfileScreen = ({ navigation }) => {
       <View style={styles.bottomNav}>
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => navigation.navigate("Profile")}
+          onPress={() => navigation.navigate("XProfile")}
         >
           <Icon name="person" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Profile</Text>
@@ -416,7 +371,7 @@ const ProfileScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => navigation.navigate("Home")}
+          onPress={() => navigation.navigate("XHome")}
         >
           <Icon name="home" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Home</Text>
@@ -424,7 +379,7 @@ const ProfileScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => navigation.navigate("Chats")}
+          onPress={() => navigation.navigate("Chatlist")}
         >
           <Icon name="chat" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Chats</Text>
@@ -531,12 +486,6 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     height: 48,
   },
-  picker: {
-    height: 50,
-    width: "100%",
-    borderRadius: 10,
-    marginBottom: 20,
-  },
   editButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -587,4 +536,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+export default XProfileScreen;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useContext } from "react";
 import {
   View,
   Text,
@@ -6,21 +6,133 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  Alert,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect hook
+import { auth, db } from "../../../config"; // Import Firebase Auth and Firestore instances
+import {
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from "firebase/auth"; // Import necessary Firebase Auth methods
+import { collection, query, where, getDocs } from "firebase/firestore"; // Import Firestore functions
 
 // Import the image
 import logo from "../../assets/images/logo.png";
+import { XProfileContext } from "../../context/XProfileContext"; // Import XProfileContext
 
 const XLoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  const { updateProfileData } = useContext(XProfileContext); // Access context function to update profile data
+
+  // Reset input fields whenever the screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      setUsername("");
+      setPassword("");
+    }, [])
+  );
+
+  const handleLogin = async () => {
+    if (!username || !password) {
+      Alert.alert("Error", "Please enter both username and password.");
+      return;
+    }
+
+    try {
+      // Step 1: Look up the user's email by their username in Firestore
+      const usersRef = collection(db, "user-expert");
+      const q = query(usersRef, where("username", "==", username));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        Alert.alert(
+          "Invalid Credentials",
+          "The username you entered does not exist."
+        );
+        return;
+      }
+
+      // Assume the first document found is the user
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      const email = userData.email; // Get the email from the user document
+
+      // Step 2: Use Firebase's signInWithEmailAndPassword method to sign in the user
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      console.log("User logged in successfully!");
+
+      // Update the profile context with the logged-in user's data
+      updateProfileData({
+        id: userDoc.id, // Include the document ID
+        ...userData, // Spread the rest of the data from Firestore (e.g., expertise, categoryRole)
+      });
+
+      // Navigate to the Home screen and pass the profile data
+      navigation.navigate("XHome");
+    } catch (error) {
+      console.error("Error logging in:", error);
+
+      if (
+        error.code === "auth/wrong-password" ||
+        error.code === "auth/user-not-found" ||
+        error.code === "auth/invalid-email" ||
+        error.code === "auth/invalid-credential"
+      ) {
+        Alert.alert(
+          "Invalid Credentials",
+          "The username or password you entered is incorrect. Please try again."
+        );
+      } else {
+        Alert.alert("Login Error", error.message);
+      }
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!username) {
+      Alert.alert(
+        "Error",
+        "Please enter your username to reset your password."
+      );
+      return;
+    }
+
+    try {
+      // Step 1: Look up the user's email by their username in Firestore
+      const usersRef = collection(db, "user-expert");
+      const q = query(usersRef, where("username", "==", username));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        Alert.alert("Error", "The username you entered does not exist.");
+        return;
+      }
+
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      const email = userData.email;
+
+      // Step 2: Use Firebase Auth to send a password reset email
+      await sendPasswordResetEmail(auth, email);
+
+      Alert.alert(
+        "Password Reset Email Sent",
+        "A password reset email has been sent to your registered email address. Please check your email to reset your password."
+      );
+    } catch (error) {
+      console.error("Error sending password reset email:", error);
+      Alert.alert("Error", error.message);
+    }
+  };
 
   return (
     <View style={styles.container}>
       {/* Display the logo */}
       <Image source={logo} style={styles.logo} />
 
-      <Text style={styles.welcomeText}>Welcome, Doc!</Text>
+      <Text style={styles.welcomeText}>Welcome Doc!</Text>
       <Text style={styles.subText}>Enter your credentials to login</Text>
 
       <TextInput
@@ -41,16 +153,11 @@ const XLoginScreen = ({ navigation }) => {
         secureTextEntry
       />
 
-      <TouchableOpacity
-        style={styles.loginButton}
-        onPress={() => {
-          navigation.navigate("XHome");
-        }}
-      >
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity>
+      <TouchableOpacity onPress={handleForgotPassword}>
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
       </TouchableOpacity>
 
@@ -59,7 +166,7 @@ const XLoginScreen = ({ navigation }) => {
           navigation.navigate("Login");
         }}
       >
-        <Text style={styles.loginAsExpertText}>Login as Student</Text>
+        <Text style={styles.loginAsExpertText}>Login as Teen</Text>
       </TouchableOpacity>
 
       <TouchableOpacity

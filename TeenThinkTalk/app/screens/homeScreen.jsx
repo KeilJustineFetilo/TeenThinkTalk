@@ -7,13 +7,12 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Modal,
   Dimensions,
   Animated,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons"; // For icons
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const announcements = [
   {
@@ -33,7 +32,7 @@ const announcements = [
   },
 ];
 
-const posts = [
+const postsData = [
   {
     id: "1",
     user: "John Doe",
@@ -51,13 +50,15 @@ const posts = [
 ];
 
 const HomeScreen = ({ navigation, route }) => {
-  const { profileData } = route.params || {}; // Get the passed profile data from the route
+  // Safe destructuring of route and route.params
+  const profileData = route && route.params ? route.params.profileData : null;
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [comments, setComments] = useState({});
   const [commentText, setCommentText] = useState("");
-  const [activeComment, setActiveComment] = useState(""); // Track active comment input
+  const [activeComment, setActiveComment] = useState("");
+  const [posts, setPosts] = useState(postsData);
 
   // Animated value for the side menu
   const slideAnim = useRef(new Animated.Value(-width)).current; // Start off the screen

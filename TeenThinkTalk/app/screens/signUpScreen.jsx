@@ -7,11 +7,12 @@ import {
   StyleSheet,
   Platform,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Picker } from "@react-native-picker/picker"; // Picker component for sex selection
+import { Picker } from "@react-native-picker/picker";
 import { db, auth } from "../../config";
-import { collection, addDoc, query, where, getDocs, doc, setDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, setDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
 
 const SignUpScreen = ({ navigation }) => {
@@ -24,12 +25,13 @@ const SignUpScreen = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [birthday, setBirthday] = useState(new Date());
   const [address, setAddress] = useState("");
-  const [sex, setSex] = useState(null); // Initialize as null to show gray text initially
+  const [sex, setSex] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isDateSelected, setIsDateSelected] = useState(false);
   const [errors, setErrors] = useState({});
   const [checkingUsername, setCheckingUsername] = useState(false);
-  const [showPicker, setShowPicker] = useState(false); // To control showing picker dropdown manually
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
 
   const handleSignUp = async () => {
     if (!validateFields()) {
@@ -67,7 +69,7 @@ const SignUpScreen = ({ navigation }) => {
         sex,
       };
 
-      await setDoc(doc(db, "user-teen2", user.uid), userData);
+      await setDoc(doc(db, "user-teen", user.uid), userData);
 
       console.log("User registered and data saved to Firestore!");
 
@@ -143,7 +145,7 @@ const SignUpScreen = ({ navigation }) => {
     }
 
     if (!sex) {
-      newErrors.sex = "Please select your sex."; // Error for unselected sex
+      newErrors.sex = "Please select your sex.";
       isValid = false;
     }
 
@@ -158,18 +160,56 @@ const SignUpScreen = ({ navigation }) => {
     setIsDateSelected(true);
   };
 
-  const checkUsernameAvailability = async (value) => {
-    setCheckingUsername(true);
-    const q = query(collection(db, "user-teen2"), where("username", "==", value));
-    const querySnapshot = await getDocs(q);
-    setCheckingUsername(false);
-    return !querySnapshot.empty;
+  // Check if the email is already in use in both collections: user-teen and user-expert
+  const checkEmailAvailability = async (value) => {
+    setCheckingEmail(true);
+
+    const qTeen = query(collection(db, "user-teen"), where("email", "==", value));
+    const qExpert = query(collection(db, "user-expert"), where("email", "==", value));
+
+    const [emailInTeen, emailInExpert] = await Promise.all([getDocs(qTeen), getDocs(qExpert)]);
+
+    setCheckingEmail(false);
+
+    return !emailInTeen.empty || !emailInExpert.empty;
   };
 
+  // Check if the username is already in use in both collections: user-teen and user-expert
+  const checkUsernameAvailability = async (value) => {
+    setCheckingUsername(true);
+
+    const qTeen = query(collection(db, "user-teen"), where("username", "==", value));
+    const qExpert = query(collection(db, "user-expert"), where("username", "==", value));
+
+    const [usernameInTeen, usernameInExpert] = await Promise.all([getDocs(qTeen), getDocs(qExpert)]);
+
+    setCheckingUsername(false);
+
+    return !usernameInTeen.empty || !usernameInExpert.empty;
+  };
+
+  // Handle field changes and trigger checks
   const handleChange = (field, value) => {
     let newErrors = { ...errors };
 
     switch (field) {
+      case "email":
+        setEmail(value);
+        if (!value) {
+          newErrors.email = "Email is required.";
+        } else {
+          delete newErrors.email;
+
+          checkEmailAvailability(value).then((exists) => {
+            if (exists) {
+              setErrors((prev) => ({
+                ...prev,
+                email: "Email is already in use.",
+              }));
+            }
+          });
+        }
+        break;
       case "username":
         setUsername(value);
         if (value.length < 5 || value.length > 12) {
@@ -187,14 +227,6 @@ const SignUpScreen = ({ navigation }) => {
               }));
             }
           });
-        }
-        break;
-      case "email":
-        setEmail(value);
-        if (!value) {
-          newErrors.email = "Email is required.";
-        } else {
-          delete newErrors.email;
         }
         break;
       case "password":
@@ -272,6 +304,7 @@ const SignUpScreen = ({ navigation }) => {
         value={username}
         onChangeText={(value) => handleChange("username", value)}
       />
+      {checkingUsername && <ActivityIndicator />}
       {errors.username && <Text style={styles.errorText}>{errors.username}</Text>}
 
       <TextInput
@@ -283,6 +316,7 @@ const SignUpScreen = ({ navigation }) => {
         keyboardType="email-address"
         autoCapitalize="none"
       />
+      {checkingEmail && <ActivityIndicator />}
       {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
       <View style={styles.row}>
@@ -346,12 +380,12 @@ const SignUpScreen = ({ navigation }) => {
 
         <TouchableOpacity
           onPress={() => setShowPicker(!showPicker)}
-          style={[styles.input, styles.halfWidthInput]} // Trigger picker via touchable
+          style={[styles.input, styles.halfWidthInput]}
         >
           <Text
             style={[
               styles.inputText,
-              { color: sex ? "#000000" : "#C1B8E2" }, // If a value is selected, make it black, otherwise gray
+              { color: sex ? "#000000" : "#C1B8E2" },
             ]}
           >
             {sex ? sex : "Select Sex"}
@@ -364,9 +398,9 @@ const SignUpScreen = ({ navigation }) => {
           selectedValue={sex}
           onValueChange={(itemValue) => {
             setSex(itemValue);
-            setShowPicker(false); // Hide picker after selection
+            setShowPicker(false);
           }}
-          style={{ width: "100%", backgroundColor: "#E0D7F6", marginBottom: 10 }} // Full-width picker for clarity
+          style={{ width: "100%", backgroundColor: "#E0D7F6", marginBottom: 10 }}
           mode="dropdown"
         >
           <Picker.Item label="Male" value="Male" />

@@ -8,13 +8,13 @@ import {
   Image,
   Alert,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect hook
+import { useFocusEffect } from "@react-navigation/native";
 import { auth, db } from "../../config"; // Import Firebase Auth and Firestore instances
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
-} from "firebase/auth"; // Import necessary Firebase Auth methods
-import { collection, query, where, getDocs } from "firebase/firestore"; // Import Firestore functions
+} from "firebase/auth";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 // Import the image
 import logo from "../assets/images/logo.png";
@@ -26,7 +26,6 @@ const LoginScreen = ({ navigation }) => {
 
   const { updateProfileData } = useContext(ProfileContext); // Access context function to update profile data
 
-  // Reset input fields whenever the screen gains focus
   useFocusEffect(
     useCallback(() => {
       setUsername("");
@@ -42,7 +41,7 @@ const LoginScreen = ({ navigation }) => {
 
     try {
       // Step 1: Look up the user's email by their username in Firestore
-      const usersRef = collection(db, "user-teen2"); // Adjust collection name as needed
+      const usersRef = collection(db, "user-teen"); // Student collection
       const q = query(usersRef, where("username", "==", username));
       const querySnapshot = await getDocs(q);
 
@@ -57,16 +56,16 @@ const LoginScreen = ({ navigation }) => {
       // Assume the first document found is the user
       const userDoc = querySnapshot.docs[0];
       const userData = userDoc.data();
-      const email = userData.email; // Get the email from the user document
+      const email = userData.email;
 
-      // Step 2: Use Firebase's signInWithEmailAndPassword method to sign in the user
+      // Step 2: Sign in the user
       await signInWithEmailAndPassword(auth, email.trim(), password);
       console.log("User logged in successfully!");
 
       // Update the profile context with the logged-in user's data
       updateProfileData(userData);
 
-      // Navigate to the Home screen and pass the profile data
+      // Navigate to the Home screen for students
       navigation.navigate("Home");
     } catch (error) {
       console.error("Error logging in:", error);
@@ -89,16 +88,13 @@ const LoginScreen = ({ navigation }) => {
 
   const handleForgotPassword = async () => {
     if (!username) {
-      Alert.alert(
-        "Error",
-        "Please enter your username to reset your password."
-      );
+      Alert.alert("Error", "Please enter your username to reset your password.");
       return;
     }
 
     try {
-      // Step 1: Look up the user's email by their username in Firestore
-      const usersRef = collection(db, "user-teen2");
+      // Look up the user's email by their username in Firestore
+      const usersRef = collection(db, "user-teen");
       const q = query(usersRef, where("username", "==", username));
       const querySnapshot = await getDocs(q);
 
@@ -111,7 +107,7 @@ const LoginScreen = ({ navigation }) => {
       const userData = userDoc.data();
       const email = userData.email;
 
-      // Step 2: Use Firebase Auth to send a password reset email
+      // Send password reset email
       await sendPasswordResetEmail(auth, email);
 
       Alert.alert(
@@ -158,9 +154,10 @@ const LoginScreen = ({ navigation }) => {
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
       </TouchableOpacity>
 
+      {/* Button to switch to Health Expert login */}
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate("XLogin");
+          navigation.navigate("XLogin"); // Navigate to health expert login
         }}
       >
         <Text style={styles.loginAsExpertText}>Login as Health Expert</Text>

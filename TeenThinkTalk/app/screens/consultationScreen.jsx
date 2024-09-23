@@ -95,7 +95,11 @@ const ConsultationScreen = ({ navigation }) => {
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navButton}>
+      <TouchableOpacity style={styles.navButton}
+        onPress={() => {
+          navigation.navigate("Profile");
+        }}
+      >
           <Icon name="person" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Profile</Text>
         </TouchableOpacity>
