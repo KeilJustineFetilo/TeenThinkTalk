@@ -36,14 +36,14 @@ const announcementsData = [
 const postsData = [
   {
     id: "1",
-    user: "John Doe",
-    content: "This is a sample post",
+    user: "Doc. She",
+    content: "There will be no classes",
     image: "https://via.placeholder.com/300",
     liked: false, // Track if the post is liked
   },
   {
     id: "2",
-    user: "Jane Smith BAGO",
+    user: "Doc. Chenee",
     content: "Another interesting post",
     image: "https://via.placeholder.com/300",
     liked: false, // Track if the post is liked
@@ -149,54 +149,56 @@ const XHomeScreen = ({ navigation, route }) => {
         </View>
       </View>
       {showAnnouncements && (
-        <FlatList
-          data={announcements}
-          horizontal
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.announcementContainer}>
-              <Image
-                source={{ uri: item.image }}
-                style={styles.announcementImage}
-              />
-            </View>
-          )}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.announcementList}
-        />
+        <View style={styles.announcementsWrapper}>
+          <FlatList
+            data={announcements}
+            horizontal
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.announcementContainer}>
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles.announcementImage}
+                />
+              </View>
+            )}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.announcementList}
+          />
+        </View>
       )}
-
-      {/* Create Post Section */}
-      <View style={styles.createPostContainer}>
-        <Icon name="account-circle" size={40} color="#673CC6" />
-        <TextInput
-          style={styles.createPostInput}
-          placeholder="Create post"
-          placeholderTextColor="#C1B8E2"
-          value={postContent}
-          onChangeText={setPostContent}
-        />
-        <TouchableOpacity
-          style={styles.addImageButton}
-          onPress={() => {
-            console.log("Add image clicked");
-          }}
-        >
-          <Icon name="photo" size={30} color="#673CC6" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.postButton}
-          onPress={() => {
-            console.log("Post button clicked");
-            setPostContent(""); // Clear the input after posting
-          }}
-        >
-          <Icon name="send" size={30} color="#673CC6" />
-        </TouchableOpacity>
-      </View>
 
       {/* Posts Section */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Create Post Section */}
+        <View style={styles.createPostSection}>
+          <Icon name="account-circle" size={40} color="#673CC6" />
+          <TextInput
+            style={styles.createPostInput}
+            placeholder="Create post"
+            placeholderTextColor="#C1B8E2"
+            value={postContent}
+            onChangeText={setPostContent}
+          />
+          <TouchableOpacity
+            style={styles.addImageButton}
+            onPress={() => {
+              console.log("Add image clicked");
+            }}
+          >
+            <Icon name="photo" size={30} color="#673CC6" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.postButton}
+            onPress={() => {
+              console.log("Post button clicked");
+              setPostContent(""); // Clear the input after posting
+            }}
+          >
+            <Icon name="send" size={30} color="#673CC6" />
+          </TouchableOpacity>
+        </View>
+
         {posts.map((item) => (
           <View key={item.id} style={styles.postContainer}>
             <View style={styles.postHeader}>
@@ -438,7 +440,6 @@ const styles = StyleSheet.create({
   announcementContainer: {
     width: width * 0.7,
     marginRight: 16,
-    marginBottom: 20,
     alignItems: "center",
   },
   announcementImage: {
@@ -446,19 +447,14 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 10,
   },
-  createPostContainer: {
+  announcementsWrapper: {
+    marginBottom: 10, // Add some margin to prevent overlapping with the create post section
+  },
+  createPostSection: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     marginVertical: 10,
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
   },
   createPostInput: {
     flex: 1,

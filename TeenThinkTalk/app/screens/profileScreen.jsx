@@ -74,7 +74,8 @@ const ProfileScreen = ({ navigation }) => {
   }, [formData.birthdate]);
 
   // Handle changes to form inputs
-  const handleChange = (field, value) => setFormData({ ...formData, [field]: value });
+  const handleChange = (field, value) =>
+    setFormData({ ...formData, [field]: value });
 
   // Handle saving personal information
   const handleSavePersonalInfo = async () => {
@@ -206,10 +207,10 @@ const ProfileScreen = ({ navigation }) => {
             try {
               // Sign out from Firebase Authentication
               await signOut(auth);
-  
+
               // Clear any profile data from your context or state
               clearProfileData();
-  
+
               // Navigate to the login screen
               navigation.navigate("Login");
             } catch (error) {
@@ -222,7 +223,7 @@ const ProfileScreen = ({ navigation }) => {
       ],
       { cancelable: true }
     );
-  };  
+  };
 
   return (
     <View style={styles.container}>
@@ -251,7 +252,7 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Icon name="logout" size={30} color="#fff" />
+          <Icon name="logout" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -470,7 +471,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   profileName: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
     color: "#fff",
     marginLeft: 15,

@@ -59,6 +59,7 @@ const HomeScreen = ({ navigation, route }) => {
   const [commentText, setCommentText] = useState("");
   const [activeComment, setActiveComment] = useState("");
   const [posts, setPosts] = useState(postsData);
+  const [showAnnouncements, setShowAnnouncements] = useState(true); // State to toggle announcements
 
   // Animated value for the side menu
   const slideAnim = useRef(new Animated.Value(-width)).current; // Start off the screen
@@ -133,23 +134,39 @@ const HomeScreen = ({ navigation, route }) => {
         </View>
       )}
 
-      {/* Announcements Section */}
-      <Text style={styles.sectionTitle}>Announcements</Text>
-      <FlatList
-        data={announcements}
-        horizontal
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.announcementContainer}>
-            <Image
-              source={{ uri: item.image }}
-              style={styles.announcementImage}
-            />
-          </View>
-        )}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.announcementList}
-      />
+      {/* Announcements Section with Toggle Button */}
+      <View style={styles.announcementHeader}>
+        <Text style={styles.sectionTitle}>Announcements</Text>
+        <TouchableOpacity
+          onPress={() => setShowAnnouncements(!showAnnouncements)}
+        >
+          <Icon
+            name={
+              showAnnouncements ? "keyboard-arrow-up" : "keyboard-arrow-down"
+            }
+            size={30}
+            color="#673CC6"
+          />
+        </TouchableOpacity>
+      </View>
+
+      {showAnnouncements && (
+        <FlatList
+          data={announcements}
+          horizontal
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.announcementContainer}>
+              <Image
+                source={{ uri: item.image }}
+                style={styles.announcementImage}
+              />
+            </View>
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.announcementList}
+        />
+      )}
 
       {/* Posts Section */}
       <FlatList
@@ -372,8 +389,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#3C2257",
+  },
+  announcementHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingTop: 10,
+    paddingBottom: 10,
   },
   announcementList: {
     paddingVertical: 10, // Add top and bottom padding to announcements
@@ -382,14 +405,13 @@ const styles = StyleSheet.create({
   announcementContainer: {
     width: width * 0.7,
     marginRight: 16,
-    marginBottom: 20,
+    marginBottom: 120,
     alignItems: "center",
   },
   announcementImage: {
     width: "100%",
     height: 150,
     borderRadius: 10,
-    marginBottom: 100,
   },
   postContainer: {
     backgroundColor: "#fff",
