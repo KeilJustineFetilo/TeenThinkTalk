@@ -18,13 +18,13 @@ import { collection, query, where, getDocs } from "firebase/firestore"; // Impor
 
 // Import the image
 import logo from "../../assets/images/logo.png";
-import { XProfileContext } from "../../context/XProfileContext"; // Import XProfileContext
+import { ProfileContext } from "../../context/ProfileContext"; // Import ProfileContext
 
 const XLoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const { updateProfileData } = useContext(XProfileContext); // Access context function to update profile data
+  const { setLocalProfileData } = useContext(ProfileContext); // Access setLocalProfileData to update profile data locally
 
   // Reset input fields whenever the screen gains focus
   useFocusEffect(
@@ -42,7 +42,7 @@ const XLoginScreen = ({ navigation }) => {
 
     try {
       // Step 1: Look up the user's email by their username in Firestore
-      const usersRef = collection(db, "user-expert");
+      const usersRef = collection(db, "user-expert"); // Fetch from user-expert collection
       const q = query(usersRef, where("username", "==", username));
       const querySnapshot = await getDocs(q);
 
@@ -63,13 +63,14 @@ const XLoginScreen = ({ navigation }) => {
       await signInWithEmailAndPassword(auth, email.trim(), password);
       console.log("User logged in successfully!");
 
-      // Update the profile context with the logged-in user's data
-      updateProfileData({
+      // Update the profile context with the logged-in user's data locally (no Firestore update)
+      setLocalProfileData({
         id: userDoc.id, // Include the document ID
         ...userData, // Spread the rest of the data from Firestore (e.g., expertise, categoryRole)
+        isExpert: true, // Explicitly mark the user as an expert
       });
 
-      // Navigate to the Home screen and pass the profile data
+      // Navigate to the Home screen for experts
       navigation.navigate("XHome");
     } catch (error) {
       console.error("Error logging in:", error);
@@ -101,7 +102,7 @@ const XLoginScreen = ({ navigation }) => {
 
     try {
       // Step 1: Look up the user's email by their username in Firestore
-      const usersRef = collection(db, "user-expert");
+      const usersRef = collection(db, "user-expert"); // Fetch from user-expert collection
       const q = query(usersRef, where("username", "==", username));
       const querySnapshot = await getDocs(q);
 
@@ -163,7 +164,7 @@ const XLoginScreen = ({ navigation }) => {
 
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate("Login");
+          navigation.navigate("Login"); // Navigate back to Teen login
         }}
       >
         <Text style={styles.loginAsExpertText}>Login as Teen</Text>

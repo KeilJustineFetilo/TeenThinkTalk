@@ -1,30 +1,97 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons"; // For icons
+import { auth, db } from "../../../config"; // Import Firebase Auth and Firestore
+import { collection, query, where, getDocs, orderBy } from "firebase/firestore"; // Firestore functions
+import { Picker } from "@react-native-picker/picker";
+import { useNavigation, useFocusEffect } from "@react-navigation/native"; // Navigation hooks
+import { formatDistanceToNow } from "date-fns"; // For handling time differences
 
-const consultationsData = [
-  { id: "1", title: "Lorem Ipsum 1", date: "2021-09-01" },
-  { id: "2", title: "Lorem Ipsum 2", date: "2021-09-02" },
-  { id: "3", title: "Lorem Ipsum 3", date: "2021-09-03" },
-];
+const XConsultationScreen = () => {
+  const [consultations, setConsultations] = useState([]);
+  const [categoryRoles, setCategoryRoles] = useState([]); // To store the expert's categoryRoles
+  const [selectedCategoryRole, setSelectedCategoryRole] = useState("all"); // For the currently selected role
+  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
 
-const XConsultationScreen = ({ navigation }) => {
-  const [selectedTab, setSelectedTab] = useState("Pending");
+  // Fetch consultations when the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchPendingConsultations();
+    }, [selectedCategoryRole]) // Re-fetch consultations whenever the selected role changes
+  );
 
-  const handleTabChange = (tab) => {
-    setSelectedTab(tab);
+  const fetchPendingConsultations = async () => {
+    try {
+      setLoading(true);
+      const user = auth.currentUser;
+
+      if (user) {
+        // Fetch expert data to get their categoryRoles (array)
+        const expertQuery = query(
+          collection(db, "user-expert"),
+          where("uid", "==", user.uid)
+        );
+        const expertSnapshot = await getDocs(expertQuery);
+        const expertData = expertSnapshot.docs[0]?.data();
+
+        if (expertData && expertData.categoryRole) {
+          setCategoryRoles(expertData.categoryRole);
+
+          // Fetch consultations for all roles when "all" is selected
+          let consultationsQuery;
+          if (selectedCategoryRole === "all") {
+            // Fetch consultations for all category roles
+            consultationsQuery = query(
+              collection(db, "consultations"),
+              where("category", "in", expertData.categoryRole), // Match all roles
+              where("status", "==", "Pending"), // Fetch only pending consultations
+              orderBy("createdAt", "desc")
+            );
+          } else {
+            // Fetch consultations for the selected role
+            consultationsQuery = query(
+              collection(db, "consultations"),
+              where("category", "==", selectedCategoryRole),
+              where("status", "==", "Pending"), // Fetch only pending consultations
+              orderBy("createdAt", "desc")
+            );
+          }
+
+          const consultationsSnapshot = await getDocs(consultationsQuery);
+          const consultationData = consultationsSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+
+          setConsultations(consultationData);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching consultations:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleConsultNow = () => {
-    // Add the function to handle 'Consult Now' action
-    console.log("Consult Now Clicked");
+  const handleViewDetails = (consultationId) => {
+    navigation.navigate("XConsultationDetail", { consultationId });
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#673CC6" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -33,65 +100,46 @@ const XConsultationScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.navigate("XHome")}>
           <Icon name="arrow-back" size={30} color="#673CC6" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{selectedTab} Consultations</Text>
+        <Text style={styles.headerTitle}>Consultation Requests</Text>
         <Icon name="add" size={30} color="#673CC6" style={{ opacity: 0 }} />
       </View>
 
-      {/* Tab Buttons */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            selectedTab === "Pending" && styles.tabButtonActive,
-          ]}
-          onPress={() => handleTabChange("Pending")}
+      {/* Category Role Filter */}
+      <View style={styles.filterContainer}>
+        <Text style={styles.filterLabel}>Filter by Category Role:</Text>
+        <Picker
+          selectedValue={selectedCategoryRole}
+          onValueChange={(value) => setSelectedCategoryRole(value)}
+          style={styles.picker}
         >
-          <Text style={styles.tabText}>Pending</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            selectedTab === "Declined" && styles.tabButtonActive,
-          ]}
-          onPress={() => handleTabChange("Declined")}
-        >
-          <Text style={styles.tabText}>Declined</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            selectedTab === "Completed" && styles.tabButtonActive,
-          ]}
-          onPress={() => handleTabChange("Completed")}
-        >
-          <Text style={styles.tabText}>Completed</Text>
-        </TouchableOpacity>
+          <Picker.Item label="All Roles" value="all" />
+          {categoryRoles.map((role, index) => (
+            <Picker.Item key={index} label={role} value={role} />
+          ))}
+        </Picker>
       </View>
 
       {/* Consultation List */}
-      <FlatList
-        data={consultationsData}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.listItem}>
-            <Text style={styles.listItemText}>
-              {item.title} - {item.date}
-            </Text>
-          </View>
-        )}
-      />
-
-      <View style={styles.divider} />
-
-      {/* Consult Now Button */}
-      <TouchableOpacity
-        style={styles.consultNowButton}
-        onPress={() => {
-          navigation.navigate("Category");
-        }}
-      >
-        <Text style={styles.consultNowButtonText}>Consult Now</Text>
-      </TouchableOpacity>
+      {consultations.length > 0 ? (
+        <FlatList
+          data={consultations}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => handleViewDetails(item.id)}>
+              <View style={styles.listItem}>
+                <Text style={styles.listItemText}>
+                  {item.title} - {item.category} -{" "}
+                  {formatDistanceToNow(item.createdAt.toDate(), { addSuffix: true })}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      ) : (
+        <Text style={styles.noConsultationsText}>
+          No consultations available for this category role.
+        </Text>
+      )}
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
@@ -102,7 +150,7 @@ const XConsultationScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => {
-            navigation.navigate("Home");
+            navigation.navigate("XHome");
           }}
         >
           <Icon name="home" size={30} color="#673CC6" />
@@ -138,24 +186,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#673CC6",
   },
-  tabContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    backgroundColor: "#E0D7F6",
-    paddingVertical: 10,
+  filterContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
   },
-  tabButton: {
-    flex: 1,
-    alignItems: "center",
-    padding: 10,
-  },
-  tabButtonActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: "#673CC6",
-  },
-  tabText: {
+  filterLabel: {
     fontSize: 16,
+    fontWeight: "bold",
     color: "#673CC6",
+    marginBottom: 8,
+  },
+  picker: {
+    borderColor: "#673CC6",
+    borderWidth: 1,
+    borderRadius: 10,
+    backgroundColor: "#fff",
+    marginBottom: 16,
   },
   listItem: {
     backgroundColor: "#fff",
@@ -168,22 +214,11 @@ const styles = StyleSheet.create({
     color: "#673CC6",
     fontSize: 16,
   },
-  divider: {
-    borderBottomColor: "#ddd",
-    borderBottomWidth: 1,
-    marginHorizontal: 10,
-  },
-  consultNowButton: {
-    backgroundColor: "#673CC6",
-    alignItems: "center",
-    padding: 15,
-    margin: 10,
-    borderRadius: 5,
-  },
-  consultNowButtonText: {
-    color: "#FFF",
+  noConsultationsText: {
+    textAlign: "center",
     fontSize: 16,
-    fontWeight: "bold",
+    marginTop: 20,
+    color: "#673CC6",
   },
   bottomNav: {
     flexDirection: "row",
@@ -192,6 +227,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#ddd",
     paddingVertical: 10,
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   navButton: {
     alignItems: "center",

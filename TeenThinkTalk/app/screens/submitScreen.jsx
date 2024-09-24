@@ -6,9 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ScrollView,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { db, auth } from "../../config"; // Firebase Firestore and Auth configuration
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"; // Firestore functions
 
 const SubmitScreen = () => {
   const navigation = useNavigation();
@@ -16,16 +19,41 @@ const SubmitScreen = () => {
 
   const { category, areaOfConcern } = route.params; // Get passed category and areaOfConcern
 
-  const [concern, setConcern] = useState(""); // Input for concern
+  // Form state
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
 
-  const handleSubmit = () => {
-    if (!concern.trim()) {
-      Alert.alert("Error", "Please enter your concern.");
+  const handleSubmit = async () => {
+    if (!title.trim() || !description.trim()) {
+      Alert.alert("Error", "Please fill in all fields.");
       return;
     }
-    // Submit logic
-    Alert.alert("Success", "Concern submitted successfully!");
-    navigation.navigate("Home"); // Redirect to home after submission
+
+    try {
+      // Get the current logged-in user
+      const user = auth.currentUser;
+      if (!user) {
+        Alert.alert("Error", "No user is logged in.");
+        return;
+      }
+
+      // Submit the form data to Firestore
+      await addDoc(collection(db, "consultations"), {
+        title: title,
+        description: description,
+        category: category,
+        subCategory: areaOfConcern,
+        status: "Pending", // Initial status of the consultation
+        createdAt: serverTimestamp(), // Firestore server timestamp
+        uid: user.uid, // User ID from the logged-in user
+      });
+
+      Alert.alert("Success", "Consultation submitted successfully!");
+      navigation.navigate("Consultations", { refresh: true }); // Redirect to home after submission
+    } catch (error) {
+      console.error("Error adding consultation:", error);
+      Alert.alert("Error", "Failed to submit your consultation.");
+    }
   };
 
   const handleCancel = () => {
@@ -47,41 +75,53 @@ const SubmitScreen = () => {
         </View>
       </View>
 
-      {/* Form fields */}
-      <View style={styles.form}>
-        <Text style={styles.label}>Category</Text>
-        <TextInput
-          style={styles.input}
-          value={category} // Pre-filled category
-          editable={false}
-        />
+      {/* Scrollable form */}
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <View style={styles.form}>
+          <Text style={styles.label}>Category</Text>
+          <TextInput
+            style={styles.input}
+            value={category} // Pre-filled category
+            editable={false}
+          />
 
-        <Text style={styles.label}>Area of Concern</Text>
-        <TextInput
-          style={styles.input}
-          value={areaOfConcern} // Pre-filled area of concern
-          editable={false}
-        />
+          <Text style={styles.label}>Area of Concern</Text>
+          <TextInput
+            style={styles.input}
+            value={areaOfConcern} // Pre-filled area of concern
+            editable={false}
+          />
 
-        <Text style={styles.label}>Concern</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Enter your concern"
-          value={concern}
-          onChangeText={setConcern}
-          multiline
-        />
+          {/* Title Field */}
+          <Text style={styles.label}>Title</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter a title"
+            value={title}
+            onChangeText={setTitle}
+          />
 
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Submit</Text>
-          </TouchableOpacity>
+          {/* Description Field */}
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Enter a description"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+          />
 
-          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+              <Text style={styles.submitButtonText}>Submit</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </ScrollView>
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
@@ -139,9 +179,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#673CC6", // Title color
   },
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
   form: {
     marginTop: 20,
-    paddingHorizontal: 20,
   },
   label: {
     fontSize: 16,
@@ -157,7 +201,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   textArea: {
-    height: 150, // Increase height for the Concern field
+    height: 150, // Increase height for the Description field
     textAlignVertical: "top",
     fontSize: 15,
   },

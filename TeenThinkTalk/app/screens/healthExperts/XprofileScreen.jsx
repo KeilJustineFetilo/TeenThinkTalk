@@ -9,16 +9,15 @@ import {
   Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { XProfileContext } from "../../context/XProfileContext";
-import { db, auth } from "../../../config"; // Firebase Firestore and Auth
+import { ProfileContext } from "../../context/ProfileContext";
 import {
   reauthenticateWithCredential,
   EmailAuthProvider,
   verifyBeforeUpdateEmail,
   signOut,
 } from "firebase/auth";
-import { doc, updateDoc } from "firebase/firestore"; // Firestore update functions
-import DateTimePicker from "@react-native-community/datetimepicker"; // Date picker for birthdate
+import { db, auth } from "../../../config";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 // Function to format the date to MM/DD/YYYY
 const formatDate = (date) => {
@@ -47,7 +46,7 @@ const calculateAge = (birthdate) => {
 
 const XProfileScreen = ({ navigation }) => {
   const { profileData, updateProfileData, clearProfileData } =
-    useContext(XProfileContext);
+    useContext(ProfileContext);
 
   const [formData, setFormData] = useState({
     firstName: profileData.firstName,
@@ -65,22 +64,22 @@ const XProfileScreen = ({ navigation }) => {
     new Date(profileData.birthdate || Date.now())
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [password, setPassword] = useState(""); // Store user password for re-authentication
+  const [password, setPassword] = useState("");
   const [isPersonalInfoEditable, setIsPersonalInfoEditable] = useState(false);
   const [isAccountDetailsEditable, setIsAccountDetailsEditable] =
     useState(false);
 
   useEffect(() => {
-    setFormData({
+    setFormData((prevData) => ({
+      ...prevData,
       firstName: profileData.firstName,
       lastName: profileData.lastName,
       middleName: profileData.middleName,
       address: profileData.address,
-      email: profileData.email,
       birthdate: profileData.birthdate,
       sex: profileData.sex || "Male",
       expertise: profileData.expertise,
-    });
+    }));
     setAge(calculateAge(profileData.birthdate));
   }, [profileData]);
 
@@ -88,6 +87,7 @@ const XProfileScreen = ({ navigation }) => {
     setFormData({ ...formData, [field]: value });
   };
 
+  // Handle saving personal information
   const handleSavePersonalInfo = async () => {
     try {
       const updatedFormData = {
@@ -103,8 +103,8 @@ const XProfileScreen = ({ navigation }) => {
     }
   };
 
+  // Handle cancelling personal info edits (without resetting email)
   const handleCancelPersonalInfo = () => {
-    // Reset only personal information, without affecting the email
     setFormData((prevFormData) => ({
       ...prevFormData,
       firstName: profileData.firstName,
@@ -114,11 +114,14 @@ const XProfileScreen = ({ navigation }) => {
       birthdate: profileData.birthdate,
       sex: profileData.sex,
       expertise: profileData.expertise,
+      // Keep email unchanged!
+      email: prevFormData.email,
     }));
-    setAge(calculateAge(profileData.birthdate)); // Reset the age based on the original birthdate
+    setAge(calculateAge(profileData.birthdate));
     setIsPersonalInfoEditable(false);
   };
 
+  // Handle saving account details (e.g., email change)
   const handleSaveAccountDetails = async () => {
     try {
       const user = auth.currentUser;
@@ -126,8 +129,8 @@ const XProfileScreen = ({ navigation }) => {
         const credential = EmailAuthProvider.credential(user.email, password);
         await reauthenticateWithCredential(user, credential);
         await verifyBeforeUpdateEmail(user, formData.email);
-        await updateFirestoreEmail(formData.email);
-        await signOut(auth);
+        await updateProfileData({ email: formData.email.trim() }); // Update the email in Firestore via context
+        await signOut(auth); // Sign out after email change
         navigation.navigate("XLogin");
       } else {
         Alert.alert("Error", "Please provide a password for email update.");
@@ -139,14 +142,12 @@ const XProfileScreen = ({ navigation }) => {
     }
   };
 
-  const updateFirestoreEmail = async (newEmail) => {
-    if (!profileData.id) throw new Error("Profile ID is missing.");
-    const userDocRef = doc(db, "user-teen", profileData.id);
-    await updateDoc(userDocRef, { email: newEmail });
-  };
-
+  // Handle cancelling account details edits
   const handleCancelAccountDetails = () => {
-    setFormData({ ...formData, email: profileData.email });
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      email: profileData.email,
+    }));
     setPassword("");
     setIsAccountDetailsEditable(false);
   };
@@ -159,9 +160,40 @@ const XProfileScreen = ({ navigation }) => {
   };
 
   const handleLogout = () => {
-    clearProfileData();
-    navigation.navigate("XLogin");
+    // Show a confirmation dialog before logging out
+    Alert.alert(
+      "Logout", // Title of the dialog
+      "Are you sure you want to log out?", // Message of the dialog
+      [
+        {
+          text: "Cancel", // Cancel button
+          onPress: () => console.log("Logout canceled"),
+          style: "cancel", // Sets the cancel button style
+        },
+        {
+          text: "Logout", // Logout button
+          onPress: async () => {
+            try {
+              // Sign out from Firebase Authentication
+              await signOut(auth);
+  
+              // Clear any profile data from your context or state
+              clearProfileData();
+  
+              // Navigate to the login screen
+              navigation.navigate("XLogin");
+            } catch (error) {
+              console.error("Error during logout:", error);
+              Alert.alert("Error", "Failed to log out. Please try again.");
+            }
+          },
+          style: "destructive", // Makes the logout button appear in red
+        },
+      ],
+      { cancelable: true }
+    );
   };
+  
 
   return (
     <View style={styles.container}>

@@ -47,12 +47,7 @@ const calculateAge = (birthdate) => {
 
 const ProfileScreen = ({ navigation }) => {
   const { profileData, updateProfileData, clearProfileData } =
-    useContext(ProfileContext);
-
-  // Debugging: Log profile data after loading
-  useEffect(() => {
-    console.log("Profile Data in ProfileScreen:", profileData);
-  }, [profileData]);
+    useContext(ProfileContext); // Access ProfileContext
 
   const [formData, setFormData] = useState({
     firstName: profileData.firstName,
@@ -69,20 +64,17 @@ const ProfileScreen = ({ navigation }) => {
     new Date(profileData.birthdate || Date.now())
   );
   const [password, setPassword] = useState(""); // Store user password for re-authentication
-  const [showPicker, setShowPicker] = useState(false);
   const [isPersonalInfoEditable, setIsPersonalInfoEditable] = useState(false);
   const [isAccountDetailsEditable, setIsAccountDetailsEditable] =
     useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
-    const updatedAge = calculateAge(formData.birthdate);
-    setFormData((prevData) => ({ ...prevData, age: updatedAge })); // Update the formData with recalculated age
+    setAge(calculateAge(formData.birthdate)); // Update the age when birthdate changes
   }, [formData.birthdate]);
 
   // Handle changes to form inputs
-  const handleChange = (field, value) =>
-    setFormData({ ...formData, [field]: value });
+  const handleChange = (field, value) => setFormData({ ...formData, [field]: value });
 
   // Handle saving personal information
   const handleSavePersonalInfo = async () => {
@@ -110,20 +102,16 @@ const ProfileScreen = ({ navigation }) => {
           "Re-authentication Required",
           "Please enter your password to confirm the email change."
         );
-        return Promise.reject("Password required for email update");
+        return;
       }
 
       const user = auth.currentUser;
       const credential = EmailAuthProvider.credential(user.email, password);
 
-      console.log("Re-authenticating user with email:", user.email);
-
       // Re-authenticate the user
       await reauthenticateWithCredential(user, credential);
-      console.log("Re-authentication successful");
 
       await verifyBeforeUpdateEmail(user, formData.email.trim());
-      console.log("Verification email sent to new address!");
 
       Alert.alert(
         "Verification Email Sent",
@@ -133,21 +121,17 @@ const ProfileScreen = ({ navigation }) => {
       // After email verification, update the profile in Firestore
       await updateProfileData({ email: formData.email.trim() });
 
+      // Sign the user out after email verification process starts
       await signOut(auth);
       navigation.navigate("Login");
     } catch (error) {
       console.error("Error updating email:", error);
       Alert.alert("Error", error.message || "Failed to update email.");
-      return Promise.reject(error);
     }
   };
 
   // Handle saving account details, including email
   const handleSaveAccountDetails = async () => {
-    console.log(
-      "Saving account details. Email change:",
-      formData.email !== profileData.email
-    );
     if (formData.email !== profileData.email) {
       try {
         await confirmEmailChange();
@@ -161,19 +145,19 @@ const ProfileScreen = ({ navigation }) => {
   // Cancel personal information changes
   const handleCancelPersonalInfo = () => {
     // Reset only personal information, without affecting the email
-    setFormData((prevFormData) => ({
-      ...prevFormData,
+    setFormData({
+      ...formData, // Keep the current email
       firstName: profileData.firstName,
       lastName: profileData.lastName,
       middleName: profileData.middleName,
       address: profileData.address,
       birthdate: profileData.birthdate,
       sex: profileData.sex,
-      expertise: profileData.expertise,
-    }));
+    });
     setAge(calculateAge(profileData.birthdate)); // Reset the age based on the original birthdate
     setIsPersonalInfoEditable(false);
   };
+
   // Cancel account details changes
   const handleCancelAccountDetails = () => {
     setFormData({
@@ -198,11 +182,47 @@ const ProfileScreen = ({ navigation }) => {
     setAge(calculateAge(currentDate));
   };
 
+  // Open date picker with the currently selected date
+  const openDatePicker = () => {
+    setSelectedDate(new Date(formData.birthdate));
+    setShowDatePicker(true);
+  };
+
   // Handle logout
   const handleLogout = () => {
-    clearProfileData();
-    navigation.navigate("Login");
-  };
+    // Show a confirmation dialog before logging out
+    Alert.alert(
+      "Logout", // Title of the dialog
+      "Are you sure you want to log out?", // Message of the dialog
+      [
+        {
+          text: "Cancel", // Cancel button
+          onPress: () => console.log("Logout canceled"),
+          style: "cancel", // Sets the cancel button style
+        },
+        {
+          text: "Logout", // Logout button
+          onPress: async () => {
+            try {
+              // Sign out from Firebase Authentication
+              await signOut(auth);
+  
+              // Clear any profile data from your context or state
+              clearProfileData();
+  
+              // Navigate to the login screen
+              navigation.navigate("Login");
+            } catch (error) {
+              console.error("Error during logout:", error);
+              Alert.alert("Error", "Failed to log out. Please try again.");
+            }
+          },
+          style: "destructive", // Makes the logout button appear in red
+        },
+      ],
+      { cancelable: true }
+    );
+  };  
 
   return (
     <View style={styles.container}>
@@ -298,7 +318,7 @@ const ProfileScreen = ({ navigation }) => {
                   { justifyContent: "center" },
                 ]}
                 disabled={!isPersonalInfoEditable}
-                onPress={() => setShowDatePicker(true)}
+                onPress={openDatePicker}
               >
                 <Text style={styles.textInputText}>
                   {formatDate(formData.birthdate)}
@@ -309,11 +329,7 @@ const ProfileScreen = ({ navigation }) => {
             <View style={styles.ageContainer}>
               <Text style={styles.label}>Age</Text>
               <TextInput
-                style={[
-                  styles.input,
-                  isPersonalInfoEditable,
-                  { height: 48 },
-                ]}
+                style={[styles.input, { height: 48 }]}
                 editable={false}
                 value={String(age)}
               />
@@ -530,12 +546,6 @@ const styles = StyleSheet.create({
     flex: 0.3,
     marginLeft: 10,
     height: 48,
-  },
-  picker: {
-    height: 50,
-    width: "100%",
-    borderRadius: 10,
-    marginBottom: 20,
   },
   editButtons: {
     flexDirection: "row",

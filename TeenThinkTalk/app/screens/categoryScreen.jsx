@@ -1,8 +1,52 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons"; // For icons
+import { db } from "../../config"; // Firestore config import
+import { collection, getDocs } from "firebase/firestore"; // Firestore functions
 
 const CategoryScreen = ({ navigation }) => {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "categories"));
+        const categoriesData = [];
+
+        querySnapshot.forEach((doc) => {
+          categoriesData.push({
+            id: doc.id,
+            ...doc.data(),
+          });
+        });
+
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#673CC6" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -16,57 +60,33 @@ const CategoryScreen = ({ navigation }) => {
       <Text style={styles.subHeader}>What is your consultation about?</Text>
 
       {/* Category Options */}
-      <View style={styles.categoryContainer}>
-        <TouchableOpacity
-          style={styles.categoryBox}
-          onPress={() => {
-            navigation.navigate("Lifestyle");
-          }}
-        >
-          <Icon name="spa" size={50} color="#673CC6" />
-          <Text style={styles.categoryText}>Lifestyle</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.categoryBox}
-          onPress={() => {
-            navigation.navigate("Nutrition");
-          }}
-        >
-          <Icon name="restaurant" size={50} color="#673CC6" />
-          <Text style={styles.categoryText}>Nutrition</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.categoryBox}
-          onPress={() => {
-            navigation.navigate("Reproductive");
-          }}
-        >
-          <Icon name="favorite" size={50} color="#673CC6" />
-          <Text style={styles.categoryText}>Reproductive Health</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryBox}>
-          <Icon name="more-horiz" size={50} color="#673CC6" />
-          <Text style={styles.categoryText}>Others</Text>
-        </TouchableOpacity>
-      </View>
+      <FlatList
+        data={categories}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.categoryBox}
+            onPress={() =>
+              navigation.navigate("SubCategory", {
+                category: item.id, // Pass the category ID to SubCategoryScreen
+              })
+            }
+          >
+            <Text style={styles.categoryText}>{item.id}</Text>
+          </TouchableOpacity>
+        )}
+        contentContainerStyle={styles.categoryContainer}
+      />
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navButton}
-        onPress={() => {
-          navigation.navigate("Profile");
-        }}
-        >
+        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("Profile")}>
           <Icon name="person" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Profile</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.navButton}
-          onPress={() => {
-            navigation.navigate("Home");
-          }}
-        >
+        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("Home")}>
           <Icon name="home" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Home</Text>
         </TouchableOpacity>
@@ -95,7 +115,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     color: "#673CC6",
     flex: 1,
@@ -108,25 +128,29 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   categoryContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
     justifyContent: "space-around",
     padding: 20,
   },
   categoryBox: {
-    backgroundColor: "#E0D7F6",
-    width: "40%",
-    padding: 20,
+    backgroundColor: "#673CC6",
+    flex: 1,
+    padding: 30,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
-    borderRadius: 10,
+    margin: 10,
+    borderRadius: 15,
+    elevation: 3, // Shadow for better contrast
   },
   categoryText: {
-    fontSize: 14,
-    color: "#673CC6",
-    marginTop: 10,
-    textAlign: "center", // Center text for multi-line text like "Reproductive Health"
+    fontSize: 16, // Larger text for better visibility
+    fontWeight: "700", // Bold text for solid appearance
+    color: "#FFFFFF",
+    textAlign: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   bottomNav: {
     flexDirection: "row",
@@ -135,10 +159,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#ddd",
     paddingVertical: 10,
-    position: "absolute", // Keep the nav bar at the bottom
+    position: "absolute",
+    bottom: 0,
     left: 0,
     right: 0,
-    bottom: 0,
   },
   navButton: {
     alignItems: "center",

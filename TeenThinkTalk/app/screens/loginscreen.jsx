@@ -24,7 +24,7 @@ const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const { updateProfileData } = useContext(ProfileContext); // Access context function to update profile data
+  const { setLocalProfileData } = useContext(ProfileContext); // Function to update the profile context locally
 
   useFocusEffect(
     useCallback(() => {
@@ -62,8 +62,8 @@ const LoginScreen = ({ navigation }) => {
       await signInWithEmailAndPassword(auth, email.trim(), password);
       console.log("User logged in successfully!");
 
-      // Update the profile context with the logged-in user's data
-      updateProfileData(userData);
+      // Set the profile context data locally (without updating Firestore)
+      setLocalProfileData(userData); // This only updates the local state
 
       // Navigate to the Home screen for students
       navigation.navigate("Home");
