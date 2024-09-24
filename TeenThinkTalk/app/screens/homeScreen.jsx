@@ -35,14 +35,14 @@ const announcements = [
 const postsData = [
   {
     id: "1",
-    user: "John Doe",
-    content: "This is a sample post",
+    user: "Doc. She",
+    content: "There will be no classes",
     image: "https://via.placeholder.com/300",
     liked: false, // Track if the post is liked
   },
   {
     id: "2",
-    user: "Jane Smith BAGO",
+    user: "Doc. Chenee",
     content: "Another interesting post",
     image: "https://via.placeholder.com/300",
     liked: false, // Track if the post is liked
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 40,
     marginHorizontal: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
   },
   separatorVertical: {
     height: 20,
-    width: 1,
+    width: 2,
     backgroundColor: "#ddd",
   },
   commentSection: {
