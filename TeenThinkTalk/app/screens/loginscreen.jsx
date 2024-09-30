@@ -38,13 +38,13 @@ const LoginScreen = ({ navigation }) => {
       Alert.alert("Error", "Please enter both username and password.");
       return;
     }
-
+  
     try {
       // Step 1: Look up the user's email by their username in Firestore
       const usersRef = collection(db, "user-teen"); // Student collection
       const q = query(usersRef, where("username", "==", username));
       const querySnapshot = await getDocs(q);
-
+  
       if (querySnapshot.empty) {
         Alert.alert(
           "Invalid Credentials",
@@ -52,24 +52,43 @@ const LoginScreen = ({ navigation }) => {
         );
         return;
       }
-
+  
       // Assume the first document found is the user
       const userDoc = querySnapshot.docs[0];
       const userData = userDoc.data();
       const email = userData.email;
-
+  
+      // Check if the user is restricted by the admin
+      if (userData.isRestricted) {
+        Alert.alert(
+          "Account Restricted",
+          "Your account has been restricted by the admin. Please contact support."
+        );
+        return;
+      }
+  
       // Step 2: Sign in the user
       await signInWithEmailAndPassword(auth, email.trim(), password);
       console.log("User logged in successfully!");
-
+  
+      // Check if the email is verified
+      const currentUser = auth.currentUser;
+      if (!currentUser.emailVerified) {
+        Alert.alert(
+          "Email Not Verified",
+          "Please verify your email address to proceed."
+        );
+        return;
+      }
+  
       // Set the profile context data locally (without updating Firestore)
       setLocalProfileData(userData); // This only updates the local state
-
+  
       // Navigate to the Home screen for students
       navigation.navigate("Home");
     } catch (error) {
       console.error("Error logging in:", error);
-
+  
       if (
         error.code === "auth/wrong-password" ||
         error.code === "auth/user-not-found" ||
@@ -85,6 +104,7 @@ const LoginScreen = ({ navigation }) => {
       }
     }
   };
+  
 
   const handleForgotPassword = async () => {
     if (!username) {

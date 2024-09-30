@@ -16,7 +16,7 @@ import { formatDistanceToNow } from "date-fns"; // For handling time differences
 
 const XConsultationScreen = () => {
   const [consultations, setConsultations] = useState([]);
-  const [categoryRoles, setCategoryRoles] = useState([]); // To store the expert's categoryRoles
+  const [categoryRole, setCategoryRole] = useState(""); // To store the expert's single categoryRole
   const [selectedCategoryRole, setSelectedCategoryRole] = useState("all"); // For the currently selected role
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
@@ -34,7 +34,7 @@ const XConsultationScreen = () => {
       const user = auth.currentUser;
 
       if (user) {
-        // Fetch expert data to get their categoryRoles (array)
+        // Fetch expert data to get their categoryRole (single value)
         const expertQuery = query(
           collection(db, "user-expert"),
           where("uid", "==", user.uid)
@@ -43,20 +43,20 @@ const XConsultationScreen = () => {
         const expertData = expertSnapshot.docs[0]?.data();
 
         if (expertData && expertData.categoryRole) {
-          setCategoryRoles(expertData.categoryRole);
+          setCategoryRole(expertData.categoryRole);
 
-          // Fetch consultations for all roles when "all" is selected
+          // Fetch consultations based on the category role
           let consultationsQuery;
           if (selectedCategoryRole === "all") {
-            // Fetch consultations for all category roles
+            // Fetch consultations for the expert's categoryRole
             consultationsQuery = query(
               collection(db, "consultations"),
-              where("category", "in", expertData.categoryRole), // Match all roles
+              where("category", "==", expertData.categoryRole), // Match the single role
               where("status", "==", "Pending"), // Fetch only pending consultations
               orderBy("createdAt", "desc")
             );
           } else {
-            // Fetch consultations for the selected role
+            // Fetch consultations for the selected role (if any filter applies)
             consultationsQuery = query(
               collection(db, "consultations"),
               where("category", "==", selectedCategoryRole),
@@ -113,9 +113,7 @@ const XConsultationScreen = () => {
           style={styles.picker}
         >
           <Picker.Item label="All Roles" value="all" />
-          {categoryRoles.map((role, index) => (
-            <Picker.Item key={index} label={role} value={role} />
-          ))}
+          <Picker.Item label={categoryRole} value={categoryRole} />
         </Picker>
       </View>
 

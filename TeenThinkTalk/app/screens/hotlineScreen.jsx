@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,19 +6,47 @@ import {
   StyleSheet,
   Clipboard,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { collection, getDocs } from "firebase/firestore"; // Import necessary Firestore functions
+import { db } from "../../config"; // Import your Firebase configuration file
 
 const HotlineScreen = ({ navigation }) => {
+  const [hotlines, setHotlines] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHotlines = async () => {
+      try {
+        // Fetching data from the 'hotlines' collection in Firestore
+        const hotlineSnapshot = await getDocs(collection(db, 'hotlines'));
+        const hotlineArray = hotlineSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setHotlines(hotlineArray);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching hotlines:', error);
+      }
+    };
+
+    fetchHotlines();
+  }, []);
+
   const handleBack = () => {
     navigation.goBack();
   };
 
-  // Function to handle copying text to the clipboard
   const copyToClipboard = (text) => {
     Clipboard.setString(text);
     Alert.alert("Copied to Clipboard", `${text} has been copied!`);
   };
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#673CC6" style={styles.loader} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -33,57 +61,25 @@ const HotlineScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Hotline Sections */}
-      <View style={styles.hotlineSection1}>
+      {/* Hotline Section */}
+      <View style={styles.hotlineSection}>
         <View style={styles.hotlineHeader}>
           <Icon name="public" size={30} color="#3C2257" />
-          <Text style={styles.hotlineTitle}>LOREM IPSUM</Text>
+          <Text style={styles.hotlineTitle}>City Hotlines</Text>
         </View>
-        <View style={styles.contact}>
-          <Text style={styles.contactLabel}>City Health</Text>
-          <View style={styles.contactRow}>
-            <Text style={styles.contactNumber}>09518699012</Text>
-            <TouchableOpacity onPress={() => copyToClipboard("09518699012")}>
-              <Icon name="content-copy" size={24} color="#3C2257" />
-            </TouchableOpacity>
+        
+        {/* Display All Hotlines */}
+        {hotlines.map((hotline) => (
+          <View key={hotline.id} style={styles.contact}>
+            <Text style={styles.contactLabel}>{hotline.name}</Text>
+            <View style={styles.contactRow}>
+              <Text style={styles.contactNumber}>{hotline.number}</Text>
+              <TouchableOpacity onPress={() => copyToClipboard(hotline.number)}>
+                <Icon name="content-copy" size={24} color="#3C2257" />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </View>
-
-      <View style={styles.hotlineSection2}>
-        <View style={styles.hotlineHeader}>
-          <Icon name="info" size={30} color="#3C2257" />
-          <Text style={styles.hotlineTitle}>LOREM IPSUM</Text>
-        </View>
-        <View style={styles.contact}>
-          <Text style={styles.contactLabel}>City Health</Text>
-          <View style={styles.contactRow}>
-            <Text style={styles.contactNumber}>09518699012</Text>
-            <TouchableOpacity onPress={() => copyToClipboard("09518699012")}>
-              <Icon name="content-copy" size={24} color="#3C2257" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.contact}>
-          <Text style={styles.contactLabel}>City Health</Text>
-          <View style={styles.contactRow}>
-            <Text style={styles.contactNumber}>09518699012</Text>
-            <TouchableOpacity onPress={() => copyToClipboard("09518699012")}>
-              <Icon name="content-copy" size={24} color="#3C2257" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.contact}>
-          <Text style={styles.contactLabel}>City Health</Text>
-          <View style={styles.contactRow}>
-            <Text style={styles.contactNumber}>09518699012</Text>
-            <TouchableOpacity onPress={() => copyToClipboard("09518699012")}>
-              <Icon name="content-copy" size={24} color="#3C2257" />
-            </TouchableOpacity>
-          </View>
-        </View>
+        ))}
       </View>
 
       {/* Bottom Navigation */}
@@ -144,18 +140,12 @@ const styles = StyleSheet.create({
     color: "#3C2257",
     marginLeft: 5,
   },
-  hotlineSection1: {
-    backgroundColor: "#E0D7F6", // First color
+  hotlineSection: {
+    backgroundColor: "#E0D7F6", // Section background color
     padding: 26,
     borderRadius: 10,
     margin: 20,
-    marginBottom: -5,
-  },
-  hotlineSection2: {
-    backgroundColor: "#F6E6FA", // Second color
-    padding: 26,
-    borderRadius: 10,
-    margin: 20,
+    marginBottom: 20,
   },
   hotlineHeader: {
     flexDirection: "row",
@@ -169,7 +159,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   contact: {
-    marginVertical: 5,
+    marginVertical: 10,
   },
   contactLabel: {
     fontSize: 14,
@@ -180,10 +170,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 5,
   },
   contactNumber: {
     fontSize: 16,
     color: "#673CC6",
+    flex: 1
   },
   bottomNav: {
     flexDirection: "row",
@@ -204,6 +196,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#673CC6",
   },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });
 
 export default HotlineScreen;
