@@ -35,77 +35,76 @@ const XLoginScreen = ({ navigation }) => {
   );
 
   const handleLogin = async () => {
-  if (!username || !password) {
-    Alert.alert("Error", "Please enter both username and password.");
-    return;
-  }
-
-  try {
-    // Step 1: Look up the user's email by their username in Firestore
-    const usersRef = collection(db, "user-teen"); // Student collection
-    const q = query(usersRef, where("username", "==", username));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      Alert.alert(
-        "Invalid Credentials",
-        "The username you entered does not exist."
-      );
+    if (!username || !password) {
+      Alert.alert("Error", "Please enter both username and password.");
       return;
     }
 
-    // Assume the first document found is the user
-    const userDoc = querySnapshot.docs[0];
-    const userData = userDoc.data();
-    const email = userData.email;
+    try {
+      // Step 1: Look up the user's email by their username in Firestore
+      const usersRef = collection(db, "user-teen"); // Student collection
+      const q = query(usersRef, where("username", "==", username));
+      const querySnapshot = await getDocs(q);
 
-    // Check if the user is restricted by the admin
-    if (userData.isActive) {
-      Alert.alert(
-        "Account Marked as Inactive",
-        "Your account has been marked inactive by the admin. Please contact support."
-      );
-      return;
+      if (querySnapshot.empty) {
+        Alert.alert(
+          "Invalid Credentials",
+          "The username you entered does not exist."
+        );
+        return;
+      }
+
+      // Assume the first document found is the user
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      const email = userData.email;
+
+      // Check if the user is restricted by the admin
+      if (userData.isActive) {
+        Alert.alert(
+          "Account Marked as Inactive",
+          "Your account has been marked inactive by the admin. Please contact support."
+        );
+        return;
+      }
+
+      // Step 2: Sign in the user
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      console.log("User logged in successfully!");
+
+      // Check if the email is verified
+      const currentUser = auth.currentUser;
+      if (!currentUser.emailVerified) {
+        Alert.alert(
+          "Email Not Verified",
+          "Please verify your email address to proceed."
+        );
+        return;
+      }
+
+      // Set the profile context data locally (without updating Firestore)
+      setLocalProfileData(userData); // This only updates the local state
+
+      // Navigate to the Home screen for students
+      navigation.navigate("XHome");
+    } catch (error) {
+      console.error("Error logging in:", error);
+
+      if (
+        error.code === "auth/wrong-password" ||
+        error.code === "auth/user-not-found" ||
+        error.code === "auth/invalid-email" ||
+        error.code === "auth/invalid-credential"
+      ) {
+        Alert.alert(
+          "Invalid Credentials",
+          "The username or password you entered is incorrect. Please try again."
+        );
+      } else {
+        Alert.alert("Login Error", error.message);
+      }
     }
-
-    // Step 2: Sign in the user
-    await signInWithEmailAndPassword(auth, email.trim(), password);
-    console.log("User logged in successfully!");
-
-    // Check if the email is verified
-    const currentUser = auth.currentUser;
-    if (!currentUser.emailVerified) {
-      Alert.alert(
-        "Email Not Verified",
-        "Please verify your email address to proceed."
-      );
-      return;
-    }
-
-    // Set the profile context data locally (without updating Firestore)
-    setLocalProfileData(userData); // This only updates the local state
-
-    // Navigate to the Home screen for students
-    navigation.navigate("Home");
-  } catch (error) {
-    console.error("Error logging in:", error);
-
-    if (
-      error.code === "auth/wrong-password" ||
-      error.code === "auth/user-not-found" ||
-      error.code === "auth/invalid-email" ||
-      error.code === "auth/invalid-credential"
-    ) {
-      Alert.alert(
-        "Invalid Credentials",
-        "The username or password you entered is incorrect. Please try again."
-      );
-    } else {
-      Alert.alert("Login Error", error.message);
-    }
-  }
-};
-
+  };
 
   const handleForgotPassword = async () => {
     if (!username) {

@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons"; // For icons
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
 const announcements = [
   {
@@ -50,7 +50,6 @@ const postsData = [
 ];
 
 const HomeScreen = ({ navigation, route }) => {
-  // Safe destructuring of route and route.params
   const profileData = route && route.params ? route.params.profileData : null;
 
   const [menuVisible, setMenuVisible] = useState(false);
@@ -65,8 +64,11 @@ const HomeScreen = ({ navigation, route }) => {
   const slideAnim = useRef(new Animated.Value(-width)).current; // Start off the screen
   const slideNotifAnim = useRef(new Animated.Value(width)).current; // Notification off the screen (right)
 
-  // Toggle side menu
+  // Toggle side menu and close notification bar if it's open
   const toggleMenu = () => {
+    if (notificationVisible) {
+      toggleNotification(); // Close notification bar if open
+    }
     setMenuVisible(!menuVisible);
     Animated.timing(slideAnim, {
       toValue: menuVisible ? -width : 0, // Slide in or out
@@ -75,8 +77,11 @@ const HomeScreen = ({ navigation, route }) => {
     }).start();
   };
 
-  // Toggle notification bar
+  // Toggle notification bar and close menu bar if it's open
   const toggleNotification = () => {
+    if (menuVisible) {
+      toggleMenu(); // Close menu bar if open
+    }
     setNotificationVisible(!notificationVisible);
     Animated.timing(slideNotifAnim, {
       toValue: notificationVisible ? width : 0, // Slide in or out
@@ -85,7 +90,6 @@ const HomeScreen = ({ navigation, route }) => {
     }).start();
   };
 
-  // Handle adding comment
   const handleAddComment = (postId) => {
     if (!commentText) return;
     setComments((prevComments) => ({
@@ -96,7 +100,6 @@ const HomeScreen = ({ navigation, route }) => {
     setActiveComment(""); // Hide comment input after posting
   };
 
-  // Handle deleting comment
   const handleDeleteComment = (postId, index) => {
     setComments((prevComments) => ({
       ...prevComments,
@@ -104,7 +107,6 @@ const HomeScreen = ({ navigation, route }) => {
     }));
   };
 
-  // Toggle like status
   const toggleLike = (postId) => {
     const updatedPosts = posts.map((post) =>
       post.id === postId ? { ...post, liked: !post.liked } : post
@@ -114,7 +116,7 @@ const HomeScreen = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header with Menu, Notifications, and User info */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
           <Icon name="menu" size={30} color="#673CC6" />
@@ -183,7 +185,6 @@ const HomeScreen = ({ navigation, route }) => {
               <Image source={{ uri: item.image }} style={styles.postImage} />
             )}
             <View style={styles.actionsRow}>
-              {/* Like Button */}
               <TouchableOpacity onPress={() => toggleLike(item.id)}>
                 <Icon
                   name={item.liked ? "thumb-up" : "thumb-up-off-alt"}
@@ -191,9 +192,7 @@ const HomeScreen = ({ navigation, route }) => {
                   color="#673CC6"
                 />
               </TouchableOpacity>
-              {/* Separator Line */}
               <View style={styles.separatorVertical} />
-              {/* Comment Button */}
               <TouchableOpacity
                 onPress={() =>
                   setActiveComment(activeComment === item.id ? "" : item.id)
@@ -202,7 +201,7 @@ const HomeScreen = ({ navigation, route }) => {
                 <Icon name="comment" size={25} color="#673CC6" />
               </TouchableOpacity>
             </View>
-            {/* Comment Input and Send Button */}
+
             {activeComment === item.id && (
               <View style={styles.commentSection}>
                 <TextInput
@@ -221,7 +220,7 @@ const HomeScreen = ({ navigation, route }) => {
                 </TouchableOpacity>
               </View>
             )}
-            {/* Comment List */}
+
             <View style={styles.commentList}>
               {comments[item.id] &&
                 comments[item.id].map((comment, index) => (
@@ -362,31 +361,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 30,
+    paddingHorizontal: width * 0.04, // Relative padding
+    paddingTop: height * 0.04,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
-    height: 90,
-    paddingBottom: 5, // Added padding to the title bar
+    height: height * 0.11,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: width * 0.045,
     fontWeight: "bold",
     color: "#3C2257",
   },
   userInfo: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: width * 0.04,
+    paddingVertical: height * 0.015,
     backgroundColor: "#fff",
   },
   welcomeText: {
-    fontSize: 18,
+    fontSize: width * 0.045,
     color: "#3C2257",
     fontWeight: "bold",
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: width * 0.045,
     fontWeight: "bold",
     color: "#3C2257",
   },
@@ -394,31 +392,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingHorizontal: width * 0.04,
+    paddingTop: height * 0.01,
+    paddingBottom: height * 0.01,
   },
   announcementList: {
-    paddingVertical: 10, // Add top and bottom padding to announcements
-    paddingLeft: 16, // Add left padding to announcements
+    paddingVertical: height * 0.015, // Relative padding
+    paddingLeft: width * 0.04,
   },
   announcementContainer: {
     width: width * 0.7,
-    marginRight: 16,
-    marginBottom: 120,
+    marginRight: width * 0.04,
+    marginBottom: height * 0.12,
     alignItems: "center",
   },
   announcementImage: {
     width: "100%",
-    height: 150,
+    height: height * 0.2, // Adjust the height relative to the screen height
     borderRadius: 10,
   },
   postContainer: {
     backgroundColor: "#fff",
     borderRadius: 10,
-    padding: 16,
-    marginBottom: 40,
-    marginHorizontal: 16,
+    padding: width * 0.04,
+    marginBottom: height * 0.04,
+    marginHorizontal: width * 0.04,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -428,63 +426,63 @@ const styles = StyleSheet.create({
   postHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: height * 0.015,
   },
   postUser: {
-    fontSize: 16,
+    fontSize: width * 0.045,
     fontWeight: "bold",
-    marginLeft: 10,
+    marginLeft: width * 0.03,
     color: "#3C2257",
   },
   postContent: {
-    fontSize: 14,
+    fontSize: width * 0.04,
     color: "#3C2257",
-    marginBottom: 10,
+    marginBottom: height * 0.015,
   },
   postImage: {
     width: "100%",
-    height: 200,
+    height: height * 0.3, // Adjust image height for responsiveness
     borderRadius: 10,
-    marginTop: 10,
+    marginTop: height * 0.01,
   },
   actionsRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 10,
+    marginTop: height * 0.01,
   },
   separatorVertical: {
-    height: 20,
+    height: height * 0.02,
     width: 2,
     backgroundColor: "#ddd",
   },
   commentSection: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
-    paddingHorizontal: 16,
+    marginTop: height * 0.01,
+    paddingHorizontal: width * 0.04,
   },
   commentInput: {
     flex: 1,
-    height: 40,
+    height: height * 0.05, // Adjust for responsiveness
     borderRadius: 10,
     backgroundColor: "#E0D7F6",
-    paddingHorizontal: 10,
+    paddingHorizontal: width * 0.02,
   },
   sendIcon: {
-    marginLeft: 10, // Add space between send icon and text box
+    marginLeft: width * 0.02,
   },
   commentList: {
-    marginTop: 10,
-    paddingHorizontal: 16,
+    marginTop: height * 0.01,
+    paddingHorizontal: width * 0.04,
   },
   comment: {
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: "#F7F2FC",
     borderRadius: 10,
-    padding: 10,
-    marginBottom: 5,
+    padding: width * 0.02,
+    marginBottom: height * 0.01,
   },
   sideMenu: {
     position: "absolute",
@@ -494,34 +492,34 @@ const styles = StyleSheet.create({
     width: "70%",
     backgroundColor: "#3C2257",
     zIndex: 10,
-    paddingVertical: 40,
+    paddingVertical: height * 0.05,
   },
   menuHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    marginBottom: 10,
+    paddingHorizontal: width * 0.05,
+    marginBottom: height * 0.015,
   },
   menuTitle: {
-    fontSize: 18,
+    fontSize: width * 0.045,
     color: "#fff",
     fontWeight: "bold",
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: width * 0.05,
+    paddingVertical: height * 0.02,
   },
   menuItemText: {
-    fontSize: 16,
+    fontSize: width * 0.045,
     color: "#fff",
-    marginLeft: 10,
+    marginLeft: width * 0.025,
   },
   separator: {
     borderBottomColor: "#ddd",
     borderBottomWidth: 1,
-    marginVertical: 10,
+    marginVertical: height * 0.02,
   },
   notificationBar: {
     position: "absolute",
@@ -531,19 +529,19 @@ const styles = StyleSheet.create({
     width: "70%",
     backgroundColor: "#3C2257",
     zIndex: 10,
-    paddingVertical: 40,
+    paddingVertical: height * 0.05,
   },
   notificationHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    marginBottom: 10,
+    paddingHorizontal: width * 0.05,
+    marginBottom: height * 0.015,
   },
   notificationItem: {
-    fontSize: 16,
+    fontSize: width * 0.045,
     color: "#fff",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: width * 0.05,
+    paddingVertical: height * 0.015,
   },
   bottomNav: {
     flexDirection: "row",
@@ -551,7 +549,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderTopColor: "#ddd",
-    paddingVertical: 10,
+    paddingVertical: height * 0.015,
     position: "absolute",
     bottom: 0,
     left: 0,
@@ -561,7 +559,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   navButtonText: {
-    fontSize: 12,
+    fontSize: width * 0.03,
     color: "#673CC6",
   },
 });

@@ -7,15 +7,14 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Animated,
-  ScrollView,
   Dimensions,
+  Animated,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons"; // For icons
 
 const { width, height } = Dimensions.get("window");
 
-const announcementsData = [
+const announcements = [
   {
     id: "1",
     title: "Announcement 1",
@@ -51,57 +50,68 @@ const postsData = [
 ];
 
 const XHomeScreen = ({ navigation, route }) => {
-  // Use optional chaining to safely access params
-  const profileData = route?.params?.profileData || {}; // Fallback to an empty object if no params are passed
+  const profileData = route && route.params ? route.params.profileData : null;
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [comments, setComments] = useState({});
   const [commentText, setCommentText] = useState("");
   const [activeComment, setActiveComment] = useState("");
-  const [postContent, setPostContent] = useState("");
   const [posts, setPosts] = useState(postsData);
-  const [announcements, setAnnouncements] = useState(announcementsData);
-  const [showAnnouncements, setShowAnnouncements] = useState(true);
+  const [showAnnouncements, setShowAnnouncements] = useState(true); // State to toggle announcements
 
-  // Animated values
-  const slideAnim = useRef(new Animated.Value(-width)).current;
-  const slideNotifAnim = useRef(new Animated.Value(width)).current;
+  // Animated value for the side menu
+  const slideAnim = useRef(new Animated.Value(-width)).current; // Start off the screen
+  const slideNotifAnim = useRef(new Animated.Value(width)).current; // Notification off the screen (right)
 
-  // Toggle side menu
+  // Toggle side menu and close notification bar if it's open
   const toggleMenu = () => {
+    if (notificationVisible) {
+      toggleNotification(); // Close notification bar if open
+    }
     setMenuVisible(!menuVisible);
     Animated.timing(slideAnim, {
-      toValue: menuVisible ? -width : 0,
+      toValue: menuVisible ? -width : 0, // Slide in or out
       duration: 300,
       useNativeDriver: true,
     }).start();
   };
 
-  // Toggle notification bar
+  // Toggle notification bar and close menu bar if it's open
   const toggleNotification = () => {
+    if (menuVisible) {
+      toggleMenu(); // Close menu bar if open
+    }
     setNotificationVisible(!notificationVisible);
     Animated.timing(slideNotifAnim, {
-      toValue: notificationVisible ? width : 0,
+      toValue: notificationVisible ? width : 0, // Slide in or out
       duration: 300,
       useNativeDriver: true,
     }).start();
   };
 
-  // Toggle announcements
-  const toggleAnnouncements = () => {
-    setShowAnnouncements(!showAnnouncements);
-  };
-
-  // Handle adding comment
   const handleAddComment = (postId) => {
     if (!commentText) return;
     setComments((prevComments) => ({
       ...prevComments,
       [postId]: [...(prevComments[postId] || []), commentText],
     }));
-    setCommentText("");
-    setActiveComment("");
+    setCommentText(""); // Clear input
+    setActiveComment(""); // Hide comment input after posting
+  };
+
+  const handleDeleteComment = (postId, index) => {
+    setComments((prevComments) => ({
+      ...prevComments,
+      [postId]: prevComments[postId].filter((_, i) => i !== index),
+    }));
+  };
+
+  const toggleLike = (postId) => {
+    const updatedPosts = posts.map((post) =>
+      post.id === postId ? { ...post, liked: !post.liked } : post
+    );
+    setPosts(updatedPosts);
   };
 
   return (
@@ -117,90 +127,55 @@ const XHomeScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Display user name */}
-      <View style={styles.userInfo}>
-        <Text style={styles.welcomeText}>
-          Welcome, {profileData.username || "User"}!
-        </Text>
-      </View>
-
-      {/* Announcements Section */}
-      <View style={styles.announcementsHeader}>
-        <Text style={styles.sectionTitle}>Announcements</Text>
-        <View style={styles.announcementControls}>
-          <TouchableOpacity
-            style={styles.hideAnnouncementButton}
-            onPress={toggleAnnouncements}
-          >
-            <Icon
-              name={showAnnouncements ? "arrow-drop-up" : "arrow-drop-down"}
-              size={30}
-              color="#673CC6"
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.addAnnouncementButton}
-            onPress={() => {
-              console.log("Add announcement clicked");
-            }}
-          >
-            <Icon name="add" size={30} color="#673CC6" />
-          </TouchableOpacity>
-        </View>
-      </View>
-      {showAnnouncements && (
-        <View style={styles.announcementsWrapper}>
-          <FlatList
-            data={announcements}
-            horizontal
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.announcementContainer}>
-                <Image
-                  source={{ uri: item.image }}
-                  style={styles.announcementImage}
-                />
-              </View>
-            )}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.announcementList}
-          />
+      {/* Display the user name if available */}
+      {profileData && (
+        <View style={styles.userInfo}>
+          <Text style={styles.welcomeText}>
+            Welcome, {profileData.username || "User"}!
+          </Text>
         </View>
       )}
 
-      {/* Posts Section */}
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Create Post Section */}
-        <View style={styles.createPostSection}>
-          <Icon name="account-circle" size={40} color="#673CC6" />
-          <TextInput
-            style={styles.createPostInput}
-            placeholder="Create post"
-            placeholderTextColor="#C1B8E2"
-            value={postContent}
-            onChangeText={setPostContent}
+      {/* Announcements Section with Toggle Button */}
+      <View style={styles.announcementHeader}>
+        <Text style={styles.sectionTitle}>Announcements</Text>
+        <TouchableOpacity
+          onPress={() => setShowAnnouncements(!showAnnouncements)}
+        >
+          <Icon
+            name={
+              showAnnouncements ? "keyboard-arrow-up" : "keyboard-arrow-down"
+            }
+            size={30}
+            color="#673CC6"
           />
-          <TouchableOpacity
-            style={styles.addImageButton}
-            onPress={() => {
-              console.log("Add image clicked");
-            }}
-          >
-            <Icon name="photo" size={30} color="#673CC6" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.postButton}
-            onPress={() => {
-              console.log("Post button clicked");
-              setPostContent(""); // Clear the input after posting
-            }}
-          >
-            <Icon name="send" size={30} color="#673CC6" />
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
+      </View>
 
-        {posts.map((item) => (
-          <View key={item.id} style={styles.postContainer}>
+      {showAnnouncements && (
+        <FlatList
+          data={announcements}
+          horizontal
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.announcementContainer}>
+              <Image
+                source={{ uri: item.image }}
+                style={styles.announcementImage}
+              />
+            </View>
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.announcementList}
+        />
+      )}
+
+      {/* Posts Section */}
+      <FlatList
+        data={posts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.postContainer}>
             <View style={styles.postHeader}>
               <Icon name="account-circle" size={40} color="#673CC6" />
               <Text style={styles.postUser}>{item.user}</Text>
@@ -210,7 +185,7 @@ const XHomeScreen = ({ navigation, route }) => {
               <Image source={{ uri: item.image }} style={styles.postImage} />
             )}
             <View style={styles.actionsRow}>
-              <TouchableOpacity onPress={() => console.log("Like clicked")}>
+              <TouchableOpacity onPress={() => toggleLike(item.id)}>
                 <Icon
                   name={item.liked ? "thumb-up" : "thumb-up-off-alt"}
                   size={25}
@@ -226,6 +201,7 @@ const XHomeScreen = ({ navigation, route }) => {
                 <Icon name="comment" size={25} color="#673CC6" />
               </TouchableOpacity>
             </View>
+
             {activeComment === item.id && (
               <View style={styles.commentSection}>
                 <TextInput
@@ -244,6 +220,7 @@ const XHomeScreen = ({ navigation, route }) => {
                 </TouchableOpacity>
               </View>
             )}
+
             <View style={styles.commentList}>
               {comments[item.id] &&
                 comments[item.id].map((comment, index) => (
@@ -258,22 +235,21 @@ const XHomeScreen = ({ navigation, route }) => {
                 ))}
             </View>
           </View>
-        ))}
-      </ScrollView>
+        )}
+        showsVerticalScrollIndicator={false}
+      />
 
-      {/* Side Menu */}
+      {/* Animated Side Menu */}
       <Animated.View
         style={[styles.sideMenu, { transform: [{ translateX: slideAnim }] }]}
       >
         <View style={styles.menuHeader}>
-          <Text style={styles.menuTitle}>Menu</Text>
+          <Text style={styles.menuTitle}>MENU</Text>
           <TouchableOpacity onPress={toggleMenu}>
-            <Icon name="close" size={30} color="#fff" />
+            <Icon name="close" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
-
         <View style={styles.separator} />
-
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => {
@@ -295,16 +271,6 @@ const XHomeScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => {
-            console.log("BMI Calculator clicked");
-            toggleMenu();
-          }}
-        >
-          <Icon name="apps" size={25} color="#fff" />
-          <Text style={styles.menuItemText}>BMI Calculator</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => {
             navigation.navigate("XHotlines");
           }}
         >
@@ -313,7 +279,7 @@ const XHomeScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Notification Bar */}
+      {/* Animated Notification Bar */}
       <Animated.View
         style={[
           styles.notificationBar,
@@ -323,12 +289,10 @@ const XHomeScreen = ({ navigation, route }) => {
         <View style={styles.notificationHeader}>
           <Text style={styles.menuTitle}>Notifications</Text>
           <TouchableOpacity onPress={toggleNotification}>
-            <Icon name="close" size={30} color="#fff" />
+            <Icon name="close" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
-
         <View style={styles.separator} />
-
         <FlatList
           data={[
             { id: "1", text: "New Announcement has been added" },
@@ -346,9 +310,7 @@ const XHomeScreen = ({ navigation, route }) => {
       <View style={styles.bottomNav}>
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => {
-            navigation.navigate("XProfile");
-          }}
+          onPress={() => navigation.navigate("XProfile")}
         >
           <Icon name="person" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Profile</Text>
@@ -356,9 +318,7 @@ const XHomeScreen = ({ navigation, route }) => {
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => {
-            navigation.navigate("XHome");
-          }}
+          onPress={() => navigation.navigate("XHome")}
         >
           <Icon name="home" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Home</Text>
@@ -366,9 +326,7 @@ const XHomeScreen = ({ navigation, route }) => {
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => {
-            navigation.navigate("Chatlist");
-          }}
+          onPress={() => navigation.navigate("XChatlist")}
         >
           <Icon name="chat" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Chats</Text>
@@ -388,99 +346,62 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 30,
+    paddingHorizontal: width * 0.04, // Relative padding
+    paddingTop: height * 0.04,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
-    height: 90,
-    paddingBottom: 5,
+    height: height * 0.11,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: width * 0.045,
     fontWeight: "bold",
     color: "#3C2257",
   },
   userInfo: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: width * 0.04,
+    paddingVertical: height * 0.015,
     backgroundColor: "#fff",
   },
   welcomeText: {
-    fontSize: 18,
+    fontSize: width * 0.045,
     color: "#3C2257",
     fontWeight: "bold",
   },
-  announcementsHeader: {
+  sectionTitle: {
+    fontSize: width * 0.045,
+    fontWeight: "bold",
+    color: "#3C2257",
+  },
+  announcementHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 10,
-  },
-  announcementControls: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#3C2257",
-  },
-  addAnnouncementButton: {
-    marginLeft: 10,
-  },
-  hideAnnouncementButton: {
-    marginLeft: 10,
+    paddingHorizontal: width * 0.04,
+    paddingTop: height * 0.01,
+    paddingBottom: height * 0.01,
   },
   announcementList: {
-    paddingVertical: 10,
-    paddingLeft: 16,
+    paddingVertical: height * 0.015, // Relative padding
+    paddingLeft: width * 0.04,
   },
   announcementContainer: {
     width: width * 0.7,
-    marginRight: 16,
+    marginRight: width * 0.04,
+    marginBottom: height * 0.12,
     alignItems: "center",
   },
   announcementImage: {
     width: "100%",
-    height: 150,
+    height: height * 0.2, // Adjust the height relative to the screen height
     borderRadius: 10,
-  },
-  announcementsWrapper: {
-    marginBottom: 10, // Add some margin to prevent overlapping with the create post section
-  },
-  createPostSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    marginVertical: 10,
-  },
-  createPostInput: {
-    flex: 1,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "#E0D7F6",
-    paddingHorizontal: 10,
-    marginLeft: 10,
-    marginRight: 10,
-    color: "#3C2257",
-  },
-  addImageButton: {
-    marginRight: 10,
-  },
-  postButton: {
-    marginLeft: 10,
-  },
-  scrollContainer: {
-    paddingBottom: 20,
   },
   postContainer: {
     backgroundColor: "#fff",
     borderRadius: 10,
-    padding: 16,
-    marginBottom: 20,
-    marginHorizontal: 16,
+    padding: width * 0.04,
+    marginBottom: height * 0.04,
+    marginHorizontal: width * 0.04,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -490,68 +411,63 @@ const styles = StyleSheet.create({
   postHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: height * 0.015,
   },
   postUser: {
-    fontSize: 16,
+    fontSize: width * 0.045,
     fontWeight: "bold",
-    marginLeft: 10,
+    marginLeft: width * 0.03,
     color: "#3C2257",
   },
   postContent: {
-    fontSize: 14,
+    fontSize: width * 0.04,
     color: "#3C2257",
-    marginBottom: 10,
+    marginBottom: height * 0.015,
   },
   postImage: {
     width: "100%",
-    height: 200,
+    height: height * 0.3, // Adjust image height for responsiveness
     borderRadius: 10,
-    marginTop: 10,
+    marginTop: height * 0.01,
   },
   actionsRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 10,
+    marginTop: height * 0.01,
   },
   separatorVertical: {
-    height: 20,
-    width: 1,
+    height: height * 0.02,
+    width: 2,
     backgroundColor: "#ddd",
-  },
-  separator: {
-    height: 2,
-    backgroundColor: "#ddd",
-    marginVertical: 10, // Adjust for space between the separator and elements
   },
   commentSection: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
-    paddingHorizontal: 16,
+    marginTop: height * 0.01,
+    paddingHorizontal: width * 0.04,
   },
   commentInput: {
     flex: 1,
-    height: 40,
+    height: height * 0.05, // Adjust for responsiveness
     borderRadius: 10,
     backgroundColor: "#E0D7F6",
-    paddingHorizontal: 10,
+    paddingHorizontal: width * 0.02,
   },
   sendIcon: {
-    marginLeft: 10,
+    marginLeft: width * 0.02,
   },
   commentList: {
-    marginTop: 10,
-    paddingHorizontal: 16,
+    marginTop: height * 0.01,
+    paddingHorizontal: width * 0.04,
   },
   comment: {
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: "#F7F2FC",
     borderRadius: 10,
-    padding: 10,
-    marginBottom: 5,
+    padding: width * 0.02,
+    marginBottom: height * 0.01,
   },
   sideMenu: {
     position: "absolute",
@@ -561,29 +477,34 @@ const styles = StyleSheet.create({
     width: "70%",
     backgroundColor: "#3C2257",
     zIndex: 10,
-    paddingVertical: 40,
+    paddingVertical: height * 0.05,
   },
   menuHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    marginBottom: 10,
+    paddingHorizontal: width * 0.05,
+    marginBottom: height * 0.015,
   },
   menuTitle: {
-    fontSize: 18,
+    fontSize: width * 0.045,
     color: "#fff",
     fontWeight: "bold",
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: width * 0.05,
+    paddingVertical: height * 0.02,
   },
   menuItemText: {
-    fontSize: 16,
+    fontSize: width * 0.045,
     color: "#fff",
-    marginLeft: 10,
+    marginLeft: width * 0.025,
+  },
+  separator: {
+    borderBottomColor: "#ddd",
+    borderBottomWidth: 1,
+    marginVertical: height * 0.02,
   },
   notificationBar: {
     position: "absolute",
@@ -593,19 +514,19 @@ const styles = StyleSheet.create({
     width: "70%",
     backgroundColor: "#3C2257",
     zIndex: 10,
-    paddingVertical: 40,
+    paddingVertical: height * 0.05,
   },
   notificationHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    marginBottom: 10,
+    paddingHorizontal: width * 0.05,
+    marginBottom: height * 0.015,
   },
   notificationItem: {
-    fontSize: 16,
+    fontSize: width * 0.045,
     color: "#fff",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: width * 0.05,
+    paddingVertical: height * 0.015,
   },
   bottomNav: {
     flexDirection: "row",
@@ -613,7 +534,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderTopColor: "#ddd",
-    paddingVertical: 10,
+    paddingVertical: height * 0.015,
     position: "absolute",
     bottom: 0,
     left: 0,
@@ -623,7 +544,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   navButtonText: {
-    fontSize: 12,
+    fontSize: width * 0.03,
     color: "#673CC6",
   },
 });

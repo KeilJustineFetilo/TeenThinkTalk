@@ -118,9 +118,7 @@ const XGalleryScreen = ({ navigation }) => {
       <View style={styles.bottomNav}>
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => {
-            navigation.navigate("Profile");
-          }}
+          onPress={() => navigation.navigate("XProfile")}
         >
           <Icon name="person" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Profile</Text>
@@ -128,15 +126,16 @@ const XGalleryScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => {
-            navigation.navigate("XHome");
-          }}
+          onPress={() => navigation.navigate("XHome")}
         >
           <Icon name="home" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navButton}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("XChatlist")}
+        >
           <Icon name="chat" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Chats</Text>
         </TouchableOpacity>

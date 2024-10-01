@@ -176,10 +176,10 @@ const XProfileScreen = ({ navigation }) => {
             try {
               // Sign out from Firebase Authentication
               await signOut(auth);
-  
+
               // Clear any profile data from your context or state
               clearProfileData();
-  
+
               // Navigate to the login screen
               navigation.navigate("XLogin");
             } catch (error) {
@@ -193,7 +193,6 @@ const XProfileScreen = ({ navigation }) => {
       { cancelable: true }
     );
   };
-  
 
   return (
     <View style={styles.container}>
@@ -216,9 +215,7 @@ const XProfileScreen = ({ navigation }) => {
             <Text style={styles.profileName}>
               {formData.firstName} {formData.lastName}
             </Text>
-            <Text style={styles.profileSubtext}>
-              {formData.expertise}
-            </Text>
+            <Text style={styles.profileSubtext}>{formData.expertise}</Text>
           </View>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
@@ -411,7 +408,7 @@ const XProfileScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => navigation.navigate("Chatlist")}
+          onPress={() => navigation.navigate("XChatlist")}
         >
           <Icon name="chat" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Chats</Text>

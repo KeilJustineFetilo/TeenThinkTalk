@@ -9,10 +9,16 @@ import {
   Alert,
   ActivityIndicator,
   FlatList,
-  Modal,  // Import Modal
+  Modal, // Import Modal
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { collection, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 import { db } from "../../../config"; // Import your Firebase configuration
 
 const HotlineScreen = ({ navigation }) => {
@@ -61,7 +67,14 @@ const HotlineScreen = ({ navigation }) => {
         name: newHotlineName,
         number: newHotlineNumber,
       });
-      setHotlines([...hotlines, { id: newHotlineRef.id, name: newHotlineName, number: newHotlineNumber }]);
+      setHotlines([
+        ...hotlines,
+        {
+          id: newHotlineRef.id,
+          name: newHotlineName,
+          number: newHotlineNumber,
+        },
+      ]);
       Alert.alert("Success", "Hotline added successfully!");
       setNewHotlineName("");
       setNewHotlineNumber("");
@@ -84,7 +97,9 @@ const HotlineScreen = ({ navigation }) => {
   };
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#673CC6" style={styles.loader} />;
+    return (
+      <ActivityIndicator size="large" color="#673CC6" style={styles.loader} />
+    );
   }
 
   return (
@@ -106,7 +121,7 @@ const HotlineScreen = ({ navigation }) => {
           <Icon name="public" size={30} color="#3C2257" />
           <Text style={styles.hotlineTitle}>City Hotlines</Text>
         </View>
-        
+
         {/* Display All Hotlines */}
         <FlatList
           data={hotlines}
@@ -117,7 +132,9 @@ const HotlineScreen = ({ navigation }) => {
               <View style={styles.contactRow}>
                 <Text style={styles.contactNumber}>{item.number}</Text>
                 <View style={styles.iconsRow}>
-                  <TouchableOpacity onPress={() => copyToClipboard(item.number)}>
+                  <TouchableOpacity
+                    onPress={() => copyToClipboard(item.number)}
+                  >
                     <Icon name="content-copy" size={24} color="#3C2257" />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => deleteHotline(item.id)}>
@@ -182,9 +199,7 @@ const HotlineScreen = ({ navigation }) => {
       <View style={styles.bottomNav}>
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => {
-            navigation.navigate("Profile");
-          }}
+          onPress={() => navigation.navigate("XProfile")}
         >
           <Icon name="person" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Profile</Text>
@@ -192,15 +207,16 @@ const HotlineScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => {
-            navigation.navigate("Home");
-          }}
+          onPress={() => navigation.navigate("XHome")}
         >
           <Icon name="home" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navButton}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("XChatlist")}
+        >
           <Icon name="chat" size={30} color="#673CC6" />
           <Text style={styles.navButtonText}>Chats</Text>
         </TouchableOpacity>
@@ -241,7 +257,7 @@ const styles = StyleSheet.create({
     padding: 26,
     borderRadius: 10,
     margin: 20,
-    marginBottom: 20
+    marginBottom: 20,
   },
   hotlineHeader: {
     flexDirection: "row",
@@ -279,36 +295,36 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Transparent overlay
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Transparent overlay
   },
   modalContainer: {
-    width: '80%',
-    backgroundColor: '#fff',
+    width: "80%",
+    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
-    color: '#3C2257',
+    color: "#3C2257",
   },
   input: {
     backgroundColor: "#fff",
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,
-    width: '100%',
+    width: "100%",
     borderBottomWidth: 1, // Add a border at the bottom for clear underline
-    borderBottomColor: '#673CC6', // Custom color for the underline
+    borderBottomColor: "#673CC6", // Custom color for the underline
   },
   modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
   },
   addButton: {
     backgroundColor: "#673CC6",

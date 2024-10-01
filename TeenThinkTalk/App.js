@@ -36,6 +36,7 @@ import XConsultationDetailScreen from "./app/screens/healthExperts/Xconsultation
 import XGalleryScreen from "./app/screens/healthExperts/XgalleryScreen";
 import XHotlineScreen from "./app/screens/healthExperts/XhotlineScreen";
 import XProfileScreen from "./app/screens/healthExperts/XprofileScreen";
+import XChatlistScreen from "./app/screens/healthExperts/XchatlistScreen";
 
 import DeclinedConsultationCleanup from "./app/DeclinedConsultationCleanup";
 
@@ -104,8 +105,10 @@ function App() {
         <DeclinedConsultationCleanup />
       </ProfileProvider>
 
-      <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
-        
+      <Stack.Navigator
+        initialRouteName={initialRoute}
+        screenOptions={{ headerShown: false }}
+      >
         {/* Student Login Screen */}
         <Stack.Screen name="Login">
           {({ navigation }) => (
@@ -268,6 +271,13 @@ function App() {
             </ProfileProvider>
           )}
         </Stack.Screen>
+        <Stack.Screen name="XChatlist">
+          {({ navigation }) => (
+            <ProfileProvider>
+              <XProfileScreen navigation={navigation} />
+            </ProfileProvider>
+          )}
+        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -277,13 +287,13 @@ function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   text: {
     marginTop: 20,
     fontSize: 18,
-    color: '#673CC6',
+    color: "#673CC6",
   },
 });
 
