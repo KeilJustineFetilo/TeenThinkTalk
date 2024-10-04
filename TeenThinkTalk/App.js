@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import { onAuthStateChanged } from "firebase/auth"; // For checking auth state
-import { doc, getDoc } from "firebase/firestore"; // For fetching user data
-import { auth, db } from "./config"; // Your Firebase config
-import { View, ActivityIndicator, Text, StyleSheet } from "react-native"; // Import necessary components
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "./config";
+import { View, ActivityIndicator, Text, StyleSheet } from "react-native";
 
 // Import ProfileContext providers
 import { ProfileProvider } from "./app/context/ProfileContext";
@@ -38,11 +38,8 @@ import XHotlineScreen from "./app/screens/healthExperts/XhotlineScreen";
 import XProfileScreen from "./app/screens/healthExperts/XprofileScreen";
 import XChatlistScreen from "./app/screens/healthExperts/XchatlistScreen";
 
-import DeclinedConsultationCleanup from "./app/DeclinedConsultationCleanup";
-
 // Create a stack navigator
 const Stack = createStackNavigator();
-
 // Loading Screen (while determining authentication and role)
 const LoadingScreen = () => {
   return (
@@ -63,25 +60,30 @@ function App() {
         // User is logged in, now fetch their role
         const userId = user.uid;
 
-        // First, check the `user-teen` collection
-        const teenDocRef = doc(db, "user-teen", userId);
-        const teenDoc = await getDoc(teenDocRef);
+        try {
+          // First, check the `user-teen` collection
+          const teenDocRef = doc(db, "user-teen", userId);
+          const teenDoc = await getDoc(teenDocRef);
 
-        if (teenDoc.exists()) {
-          // User is a student (teen), go to Home screen
-          setInitialRoute("Home");
-        } else {
-          // Otherwise, check the `user-expert` collection
-          const expertDocRef = doc(db, "user-expert", userId);
-          const expertDoc = await getDoc(expertDocRef);
-
-          if (expertDoc.exists()) {
-            // User is an expert, go to XHome screen
-            setInitialRoute("XHome");
+          if (teenDoc.exists()) {
+            // User is a student (teen), go to Home screen
+            setInitialRoute("Home");
           } else {
-            // If no data found in either collection, send them to login screen
-            setInitialRoute("Login");
+            // Otherwise, check the `user-expert` collection
+            const expertDocRef = doc(db, "user-expert", userId);
+            const expertDoc = await getDoc(expertDocRef);
+
+            if (expertDoc.exists()) {
+              // User is an expert, go to XHome screen
+              setInitialRoute("XHome");
+            } else {
+              // If no data found in either collection, send them to login screen
+              setInitialRoute("Login");
+            }
           }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setInitialRoute("Login");
         }
       } else {
         // No user is logged in, go to Login screen
@@ -100,186 +102,55 @@ function App() {
   }
 
   return (
-    <NavigationContainer>
-      <ProfileProvider>
-        <DeclinedConsultationCleanup />
-      </ProfileProvider>
+    <ProfileProvider>
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName={initialRoute}
+          screenOptions={{ headerShown: false }}
+        >
+          {/* Student Login Screen */}
+          <Stack.Screen name="Login" component={LoginScreen} />
 
-      <Stack.Navigator
-        initialRouteName={initialRoute}
-        screenOptions={{ headerShown: false }}
-      >
-        {/* Student Login Screen */}
-        <Stack.Screen name="Login">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <LoginScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
+          {/* Sign-up Screen */}
+          <Stack.Screen name="SignUp" component={SignUpScreen} />
 
-        {/* Sign-up Screen */}
-        <Stack.Screen name="SignUp" component={SignUpScreen} />
+          {/* Student-specific screens */}
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="Gallery" component={GalleryScreen} />
+          <Stack.Screen name="BMI" component={BmiScreen} />
+          <Stack.Screen name="Hotline" component={HotlineScreen} />
+          <Stack.Screen name="Consultations" component={ConsultationScreen} />
+          <Stack.Screen
+            name="ConsultationDetail"
+            component={ConsultationDetailScreen}
+          />
+          <Stack.Screen name="Category" component={CategoryScreen} />
+          <Stack.Screen name="SubCategory" component={SubCategoryScreen} />
+          <Stack.Screen name="Nutrition" component={NutritionScreen} />
+          <Stack.Screen name="Reproductive" component={ReproductiveScreen} />
+          <Stack.Screen name="Submit" component={SubmitScreen} />
+          <Stack.Screen name="Chatlist" component={ChatlistScreen} />
+          <Stack.Screen
+            name="EmailVerification"
+            component={EmailVerificationScreen}
+          />
 
-        {/* Student-specific screens wrapped with ProfileProvider */}
-        <Stack.Screen name="Home">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <HomeScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="Profile">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <ProfileScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="Gallery">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <GalleryScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="BMI">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <BmiScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="Hotline">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <HotlineScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="Consultations">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <ConsultationScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="ConsultationDetail">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <ConsultationDetailScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="Category">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <CategoryScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="SubCategory">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <SubCategoryScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="Nutrition">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <NutritionScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="Reproductive">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <ReproductiveScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="Submit">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <SubmitScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="Chatlist">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <ChatlistScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="EmailVerification">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <EmailVerificationScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-
-        {/* Health expert screens wrapped with XProfileProvider */}
-        <Stack.Screen name="XLogin">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <XLoginScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="XHome">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <XHomeScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="XConsultations">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <XConsultationScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="XConsultationDetail">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <XConsultationDetailScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="XGallery">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <XGalleryScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="XHotlines">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <XHotlineScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="XProfile">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <XProfileScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="XChatlist">
-          {({ navigation }) => (
-            <ProfileProvider>
-              <XProfileScreen navigation={navigation} />
-            </ProfileProvider>
-          )}
-        </Stack.Screen>
-      </Stack.Navigator>
-    </NavigationContainer>
+          {/* Health expert screens */}
+          <Stack.Screen name="XLogin" component={XLoginScreen} />
+          <Stack.Screen name="XHome" component={XHomeScreen} />
+          <Stack.Screen name="XConsultations" component={XConsultationScreen} />
+          <Stack.Screen
+            name="XConsultationDetail"
+            component={XConsultationDetailScreen}
+          />
+          <Stack.Screen name="XGallery" component={XGalleryScreen} />
+          <Stack.Screen name="XHotlines" component={XHotlineScreen} />
+          <Stack.Screen name="XProfile" component={XProfileScreen} />
+          <Stack.Screen name="XChatlist" component={XChatlistScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ProfileProvider>
   );
 }
 

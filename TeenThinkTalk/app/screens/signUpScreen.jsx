@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   View,
   Text,
@@ -14,8 +14,11 @@ import { Picker } from "@react-native-picker/picker";
 import { db, auth } from "../../config";
 import { collection, query, where, getDocs, doc, setDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
+import { ProfileContext } from "../context/ProfileContext";
 
 const SignUpScreen = ({ navigation }) => {
+  const { setLocalProfileData, markAsNewRegistration } = useContext(ProfileContext); 
+
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -40,8 +43,13 @@ const SignUpScreen = ({ navigation }) => {
     }
 
     try {
+      // Mark the user as a new registration
+      markAsNewRegistration();
+      
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
+      
 
       await updateProfile(user, {
         displayName: `${firstName} ${lastName}`,
@@ -67,19 +75,41 @@ const SignUpScreen = ({ navigation }) => {
         middleName,
         username,
         sex,
+        createdAt: new Date(),
       };
 
       await setDoc(doc(db, "user-teen", user.uid), userData);
 
       console.log("User registered and data saved to Firestore!");
 
+      // Log activity
+      await logActivity(user.uid, "User Registration", `User with ID ${user.uid} registered a new account.`, `${firstName} ${lastName}`);
+
       navigation.navigate("EmailVerification");
     } catch (error) {
       console.error("Error registering user:", error);
-      alert(error.message);
+      Alert.alert("Error", error.message);
     }
   };
 
+  const logActivity = async (uid, action, description, name) => {
+    const activityLog = {
+      action,
+      category: "user",
+      date: new Date(),
+      description,
+      name,
+      username: uid,
+    };
+
+    try {
+      await setDoc(doc(collection(db, "activity-logs")), activityLog);
+      console.log("User registration activity logged in Firestore!");
+    } catch (error) {
+      console.error("Error logging activity:", error);
+    }
+  };
+  
   const calculateAge = (birthdate) => {
     const today = new Date();
     const birthDate = new Date(birthdate);
